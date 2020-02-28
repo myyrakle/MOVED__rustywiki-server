@@ -11,9 +11,11 @@
 |R006|[문서 되돌리기](./specification/R006.md)||
 |R007|[문서 토론](./specification/R007.md)||
 |R008|[문서 신고](./specification/R008.md)||
+|R009|[이미지 업로드 및 제공](./specification/R009.md)||
 |R100|[회원가입](./specification/R100.md)||
 |R101|[로그인](./specification/R101.md)||
 |R102|[권한 제어](./specification/R102.md)||
 |R103|[계정 정지](./specification/R103.md)||
 |R104|[회원 정보 문서화](./specification/R104.md)||
 |R105|[회원 기록 열람](./specification/R105.md)||
+|R106|[회원 신고](./specification/R106.md)||
