@@ -7,7 +7,7 @@
 |R002|[문서 열람](./specification/R002.md)||
 |R003|[문서 수정](./specification/R003.md)||
 |R004|[문서 삭제](./specification/R004.md)||
-|R005|[문서 수정내역 관리 및 열람](./specification/R005.md)||
+|R005|[문서 편집내역 관리 및 열람](./specification/R005.md)||
 |R006|[문서 되돌리기](./specification/R006.md)||
 |R007|[문서 토론](./specification/R007.md)||
 |R008|[문서 신고](./specification/R008.md)||
