@@ -14,6 +14,8 @@
 |R010|[문서 열람](./specification/R010.md)||
 |R011|[문서 토론](./specification/R011.md)||
 |R012|[문서 신고](./specification/R012.md)||
+|R013|[최근 수정 문서 리스트](./specification/R013.md)||
+|R014|[문서 검색](./specification/R014.md)||
 |R100|[권한 제어](./specification/R100.md)||
 |R101|[회원가입](./specification/R101.md)||
 |R102|[로그인](./specification/R102.md)||
