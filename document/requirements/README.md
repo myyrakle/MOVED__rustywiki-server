@@ -24,6 +24,6 @@
 |R101|[회원가입](./specification/R101.md)||
 |R102|[로그인](./specification/R102.md)||
 |R103|[계정 정지](./specification/R103.md)||
-|R104|[회원 정보 문서화](./specification/R104.md)||
-|R105|[회원 기록 열람](./specification/R105.md)||
+|R104|[회원 문서 생성 및 관리](./specification/R104.md)||
+|R105|[회원 기록 관리 및 열람](./specification/R105.md)||
 |R106|[회원 신고](./specification/R106.md)||
