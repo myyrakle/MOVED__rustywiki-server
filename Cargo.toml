@@ -5,5 +5,3 @@ authors = ["rustywiki team"]
 edition = "2018"
 
 [dependencies]
-actix-web = "2.0.0"
-actix-rt = "1.0"
