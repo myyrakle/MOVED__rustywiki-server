@@ -1,6 +1,6 @@
 [package]
 name = "rustywiki"
-version = "0.1.0"
+version = "0.1.0 alpha"
 authors = ["rustywiki team"]
 edition = "2018"
 
