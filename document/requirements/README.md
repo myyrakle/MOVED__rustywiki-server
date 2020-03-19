@@ -4,7 +4,7 @@
 |고유번호|요구사항명|구현|비고
 |---|---|---|---|
 |R000|[문서 작성](./specification/R000.md)|0%||
-|R001|[이미지 업로드 및 제공](./specification/R001.md)|||
+|R001|[이미지 업로드 및 제공](./specification/R001.md)|dd||
 |R002|[문서 수정](./specification/R002.md)|||
 |R003|[문서 삭제](./specification/R003.md)|||
 |R004|[문서 되돌리기](./specification/R004.md)|||
