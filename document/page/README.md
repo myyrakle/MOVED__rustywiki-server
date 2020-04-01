@@ -8,7 +8,9 @@
 |P005|[`domain/api/rollback_doc`](./specification/P005.md)|POST|문서 되돌리기|미구현||
 |P006|[`domain/api/doc_history`](./specification/P006.md)|GET|문서 역사(편집내역)|미구현||
 |P007|[`domain/api/upload_image`](./specification/P007.md)|POST|이미지 업로드|미구현||
-|P010|[`domain/api/notice`](./specification/P010.md)|GET|공지사항|미구현||
+|P010|[`domain/api/main_notice`](./specification/P010.md)|GET| 메인 공지사항|미구현||
+|P011|[`domain/api/notice/<Number>`](./specification/P011.md)|GET|공지사항 읽기|미구현||
+|P012|[`domain/api/notice_list/<length>/<Number>`](./specification/P012.md)|GET|공지사항 목록|미구현||
 |P020|[`domain/api/recent_edit`](./specification/P020.md)|GET|최근 수정 리스트|미구현||
 |P021|[`domain/api/old_edit`](./specification/P021.md)|GET|편집된지 오래인 문서 리스트|미구현||
 |P022|[`domain/api/require_creation`](./specification/P022.md)|GET|작성이 필요한 문서 리스트|미구현||
