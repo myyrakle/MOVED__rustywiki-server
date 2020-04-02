@@ -10,11 +10,11 @@
 |P007|[`domain/api/upload_image`](./specification/P007.md)|POST|이미지 업로드|미구현||
 |P010|[`domain/api/main_notice`](./specification/P010.md)|GET| 메인 공지사항|미구현||
 |P011|[`domain/api/notice/<Number>`](./specification/P011.md)|GET|공지사항 읽기|미구현||
-|P012|[`domain/api/notice_list/<length>/<Number>`](./specification/P012.md)|GET|공지사항 목록|미구현||
-|P020|[`domain/api/recent_edit`](./specification/P020.md)|GET|최근 수정 리스트|미구현||
-|P021|[`domain/api/old_edit`](./specification/P021.md)|GET|편집된지 오래인 문서 리스트|미구현||
+|P012|[`domain/api/notice_list/<Length>/<Page>`](./specification/P012.md)|GET|공지사항 목록|미구현||
+|P020|[`domain/api/recent_edit/<Length>/<Page>`](./specification/P020.md)|GET|최근 수정 리스트|미구현||
+|P021|[`domain/api/old_edit/<Length>/<Page>`](./specification/P021.md)|GET|편집된지 오래인 문서 리스트|미구현||
 |P022|[`domain/api/require_creation`](./specification/P022.md)|GET|작성이 필요한 문서 리스트|미구현||
-|P023|[`domain/api/recent_debate`](./specification/P023.md)|GET|최근 토론 리스트|미구현||
+|P023|[`domain/api/recent_debate/<Length>/<Page>`](./specification/P023.md)|GET|최근 토론 리스트|미구현||
 |P030|[`domain/api/search_doc/<Text>`](./specification/P030.md)|GET|문서 검색|미구현||
 |P100|[`domain/api/process_login`](./specification/P100.md)|POST|로그인 수행|미구현||
 |P101|[`domain/api/process_logout`](./specification/P101.md)|POST|로그아웃 수행|미구현||
