@@ -18,4 +18,4 @@
 |P030|[`domain/api/search_doc/<Text>`](./specification/P030.md)|GET|문서 검색|미구현||
 |P100|[`domain/api/process_login`](./specification/P100.md)|POST|로그인 수행|미구현||
 |P101|[`domain/api/process_logout`](./specification/P101.md)|POST|로그아웃 수행|미구현||
-|P102|[`domain/api/register_account`](./specification/P102.md)|POST|회원가입|미구현||
+|P102|[`domain/api/register_account`](./specification/P102.md)|POST|회원가입 수행|미구현||
