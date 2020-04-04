@@ -13,7 +13,7 @@
 |P012|[`domain/api/notice_list/<Length>/<Page>`](./specification/P012.md)|GET|공지사항 목록|미구현||
 |P020|[`domain/api/recent_edit/<Length>/<Page>`](./specification/P020.md)|GET|최근 수정 리스트|미구현||
 |P021|[`domain/api/old_edit/<Length>/<Page>`](./specification/P021.md)|GET|편집된지 오래인 문서 리스트|미구현||
-|P022|[`domain/api/require_creation`](./specification/P022.md)|GET|작성이 필요한 문서 리스트|미구현||
+|P022|[`domain/api/require_creation/<Length>/<Page>`](./specification/P022.md)|GET|작성이 필요한 문서 리스트|미구현||
 |P023|[`domain/api/recent_debate/<Length>/<Page>`](./specification/P023.md)|GET|최근 토론 리스트|미구현||
 |P030|[`domain/api/search_doc/<Text>`](./specification/P030.md)|GET|문서 검색|미구현||
 |P100|[`domain/api/process_login`](./specification/P100.md)|POST|로그인 수행|미구현||
