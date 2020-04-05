@@ -16,6 +16,7 @@
 |P022|[`domain/api/require_creation/<Length>/<Page>`](./specification/P022.md)|GET|작성이 필요한 문서 리스트|미구현||
 |P023|[`domain/api/recent_debate/<Length>/<Page>`](./specification/P023.md)|GET|최근 토론 리스트|미구현||
 |P030|[`domain/api/search_doc/<Text>`](./specification/P030.md)|GET|문서 검색|미구현||
+|P040|[`domain/api/open_debate/<Number>`](./specification/P040.md)|POST|새 토론 열기|미구현||
 |P100|[`domain/api/process_login`](./specification/P100.md)|POST|로그인 수행|미구현||
 |P101|[`domain/api/process_logout`](./specification/P101.md)|POST|로그아웃 수행|미구현||
 |P102|[`domain/api/register_account`](./specification/P102.md)|POST|회원가입 수행|미구현||
