@@ -3,7 +3,7 @@
 
 러스트 기반의 위키위키 엔진
 
-카카오톡 오픈채팅: [Rust 커뮤니티](https://open.kakao.com/o/gYnVurN)
+커뮤니티: [Rust 커뮤니티(카카오톡 오픈채팅방)](https://open.kakao.com/o/gYnVurN)
 
 - [요구사항 명세](./document/requirements/README.md)
 - [API 페이지 명세](./document/page/README.md)
