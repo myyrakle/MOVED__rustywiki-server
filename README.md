@@ -3,6 +3,8 @@
 
 러스트 기반의 위키위키 엔진
 
+#### 완성되지 않음
+
 커뮤니티: [Rust 커뮤니티(카카오톡 오픈채팅방)](https://open.kakao.com/o/gYnVurN)
 
 - [요구사항 명세](./document/requirements/README.md)
