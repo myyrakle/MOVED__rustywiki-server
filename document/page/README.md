@@ -22,4 +22,4 @@
 |P102|[`domain/api/register_account`](./specification/P102.md)|POST|회원가입 수행|미구현||
 |P200|[`domain/api/admin/suspend_user`](./specification/P200.md)|POST|회원 계정 정지|미구현||
 |P300|[`domain/api/root_admin/add_admin`](./specification/P300.md)|POST|관리자 임명|미구현||
-|P301|[`domain/api/root_admin/remove_admin`](./specification/P301.md)|POST|관리자 해제|미구현||
+|P301|[`domain/api/root_admin/remove_admin`](./specification/P301.md)|POST|관리자 임명해제|미구현||
