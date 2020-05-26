@@ -1,12 +1,13 @@
 [package]
 name = "rustywiki"
-version = "0.1.0 alpha"
+version = "0.0.1"
 authors = ["rustywiki team"]
 edition = "2018"
 
 [dependencies]
-actix-web = "2.0.0"
-actix-rt = "1.0"
+actix-web = "2"
+actix-rt = "1"
 actix-files = "0.2.1"
 actix-service = "1.0.5"
 listenfd = "0.3"
+env_logger = "0.7"
