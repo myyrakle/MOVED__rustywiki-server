@@ -1,25 +1,32 @@
-use actix_web::{get, post, put, delete};
+use actix_web::{
+    get,
+    post,
+    put,
+    delete,
+    Responder,
+    HttpRequest,
+};
 
 #[post("/api/create_doc")]
-async fn create_doc(_req: HttpRequest) -> impl Responder 
+async fn create_doc(_req: HttpRequest) -> impl Responder
 {
-    "미구현"
+    "unimplemented"
 }
 
 #[get("/api/read_doc")]
-async fn read_doc(_req: HttpRequest) -> impl Responder 
+async fn read_doc(_req: HttpRequest) -> impl Responder
 {
-    "미구현"
+    "unimplemented"
 }
 
 #[put("/api/update_doc")]
-async fn update_doc(_req: HttpRequest) -> impl Responder 
+async fn update_doc(_req: HttpRequest) -> impl Responder
 {
-    "미구현"
+    "unimplemented"
 }
 
 #[delete("/api/delete_doc")]
-async fn delete_doc(_req: HttpRequest) -> impl Responder 
+async fn delete_doc(_req: HttpRequest) -> impl Responder
 {
-    "미구현"
+    "unimplemented"
 }
