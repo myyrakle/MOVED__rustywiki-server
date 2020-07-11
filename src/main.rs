@@ -1,25 +1,17 @@
 use std::env;
 
-use actix_web::{
-    App,
-    HttpServer,
-    middleware::Logger,
-};
+use actix_web::{middleware::Logger, App, HttpServer};
 
 extern crate env_logger;
 
-mod action;
-
-fn init_logger()
-{
+fn init_logger() {
     //logger setting
     std::env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
 }
 
 #[actix_rt::main]
-async fn main() -> std::io::Result<()>
-{
+async fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
 
     let host = &args[1];
