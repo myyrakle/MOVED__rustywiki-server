@@ -42,7 +42,6 @@ pub struct LoggerMiddleware<S> {
 impl<S, B> Service for LoggerMiddleware<S>
 where
     S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
-    S::Future: 'static,
     B: 'static,
 {
     type Request = ServiceRequest;
