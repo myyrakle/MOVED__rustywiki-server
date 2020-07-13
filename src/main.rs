@@ -24,8 +24,6 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .wrap(Logger::new(r#"requests:"%r" status:%s elapsed:%Dms"#))
-            .service(action::create_doc)
-            .service(action::read_doc)
             .service(actix_files::Files::new("/", "/static").show_files_listing())
     })
     .bind(format!("{}:{}", host, port))?
