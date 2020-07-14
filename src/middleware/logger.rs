@@ -10,6 +10,7 @@ pub struct Logger;
 
 impl Logger {
     pub fn new() -> Logger {
+        log4rs::init_file("log4rs.yml", Default::default()).expect("log4rs init failed");
         Logger {}
     }
 }
@@ -42,6 +43,7 @@ pub struct LoggerMiddleware<S> {
 impl<S, B> Service for LoggerMiddleware<S>
 where
     S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+    S::Future: 'static,
     B: 'static,
 {
     type Request = ServiceRequest;
@@ -56,15 +58,17 @@ where
 
     // 호출될 경우
     fn call(&mut self, request: ServiceRequest) -> Self::Future {
-        println!("요청: {}", request.path());
+        log::debug!(
+            r#"METHOD: "{}", URL: "{}". "#,
+            request.method(),
+            request.path()
+        );
 
         let fut = self.service.call(request);
 
         Box::pin(async move {
             let response = fut.await?;
-
-            println!("Hi from response");
-            Ok(res)
+            Ok(response)
         })
     }
 }

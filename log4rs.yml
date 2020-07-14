@@ -2,66 +2,66 @@
 refresh_rate: 30 seconds
 
 appenders:
-  # An appender named "stdout" that writes to stdout
-  stdout:
-    kind: console
-    filters:
-      - kind: threshold
-        level: trace
-    encoder:
-      pattern: "{d(%Y-%m-%d %H:%M:%S %Z)(utc)} - {l}:{m}{n}"
+    # An appender named "stdout" that writes to stdout
+    stdout:
+        kind: console
+        filters:
+            - kind: threshold
+              level: trace
+        encoder:
+            pattern: "[{l}] {d(%Y-%m-%d %H:%M:%S %Z)(utc)} - {m}{n}"
 
-  trace:
-    kind: file
-    filters:
-      - kind: threshold
-        level: trace
-    path: "logs/trace.log"
-    encoder:
-      pattern: "{d(%Y-%m-%d %H:%M:%S %Z)(utc)} - {l}:{m}{n}"
+    trace:
+        kind: file
+        filters:
+            - kind: threshold
+              level: trace
+        path: "logs/trace.log"
+        encoder:
+            pattern: "[{l}] {d(%Y-%m-%d %H:%M:%S %Z)(utc)} - {m}{n}"
 
-  debug:
-    kind: file
-    filters:
-      - kind: threshold
-        level: debug
-    path: "logs/debug.log"
-    encoder:
-      pattern: "{d(%Y-%m-%d %H:%M:%S %Z)(utc)} - {l}:{m}{n}"
+    debug:
+        kind: file
+        filters:
+            - kind: threshold
+              level: debug
+        path: "logs/debug.log"
+        encoder:
+            pattern: "[{l}] {d(%Y-%m-%d %H:%M:%S %Z)(utc)} - {m}{n}"
 
-  info:
-    kind: file
-    filters:
-      - kind: threshold
-        level: info
-    path: "logs/info.log"
-    encoder:
-      pattern: "{d(%Y-%m-%d %H:%M:%S %Z)(utc)} - {l}:{m}{n}"
+    info:
+        kind: file
+        filters:
+            - kind: threshold
+              level: info
+        path: "logs/info.log"
+        encoder:
+            pattern: "[{l}] {d(%Y-%m-%d %H:%M:%S %Z)(utc)} - {m}{n}"
 
-  warn:
-    kind: file
-    filters:
-      - kind: threshold
-        level: warn
-    path: "logs/warn.log"
-    encoder:
-      pattern: "{d(%Y-%m-%d %H:%M:%S %Z)(utc)} - {l}:{m}{n}"
+    warn:
+        kind: file
+        filters:
+            - kind: threshold
+              level: warn
+        path: "logs/warn.log"
+        encoder:
+            pattern: "[{l}] {d(%Y-%m-%d %H:%M:%S %Z)(utc)} - {m}{n}"
 
-  error:
-    kind: file
-    filters:
-      - kind: threshold
-        level: error
-    path: "logs/error.log"
-    encoder:
-      pattern: "{d(%Y-%m-%d %H:%M:%S %Z)(utc)} - {l}:{m}{n}"
+    error:
+        kind: file
+        filters:
+            - kind: threshold
+              level: error
+        path: "logs/error.log"
+        encoder:
+            pattern: "[{l}] {d(%Y-%m-%d %H:%M:%S %Z)(utc)} - {m}{n}"
 
 # Set the default logging level to "warn" and attach the "stdout" appender to the root
 root:
-  appenders:
-    - stdout
-    - trace
-    - debug
-    - info
-    - warn
-    - error
+    appenders:
+        - stdout
+        - trace
+        - debug
+        - info
+        - warn
+        - error
