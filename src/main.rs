@@ -17,7 +17,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .wrap(middleware::Logger::new())
-            .service(actix_files::Files::new("/", "static").show_files_listing())
+            .service(actix_files::Files::new("/", "/static").show_files_listing())
     })
     .bind(format!("{}:{}", host, port))?
     .run()
