@@ -58,16 +58,21 @@ where
 
     // 호출될 경우
     fn call(&mut self, request: ServiceRequest) -> Self::Future {
-        log::debug!(
-            r#"METHOD: "{}", URL: "{}". "#,
-            request.method(),
-            request.path()
-        );
-
+        let method = request.method().to_string();
+        let path = request.path().to_string();
+        
         let fut = self.service.call(request);
 
         Box::pin(async move {
             let response = fut.await?;
+
+            log::debug!(
+                r#"{} {} "{}". "#,
+                method,
+                response.status(),
+                path
+            );
+
             Ok(response)
         })
     }
