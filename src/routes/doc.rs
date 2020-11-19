@@ -7,6 +7,12 @@ use actix_web::{
     HttpRequest,
 };
 
+#[post("/test")]
+pub async fn test(_req: HttpRequest) -> impl Responder
+{
+    "test"
+}
+
 #[post("/api/create_doc")]
 pub async fn create_doc(_req: HttpRequest) -> impl Responder
 {
