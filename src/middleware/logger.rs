@@ -10,7 +10,7 @@ pub struct Logger;
 
 impl Logger {
     pub fn new() -> Logger {
-        //log4rs::init_file("log4rs.yml", Default::default()).expect("log4rs init failed");
+        log4rs::init_file("log4rs.yml", Default::default()); //.expect("log4rs init failed");
         Logger {}
     }
 }

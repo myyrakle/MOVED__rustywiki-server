@@ -7,31 +7,31 @@ use actix_web::{
     HttpRequest,
 };
 
-#[post("/test")]
+#[get("/test")]
 pub async fn test(_req: HttpRequest) -> impl Responder
 {
     "test"
 }
 
-#[post("/api/create_doc")]
+#[post("/document")]
 pub async fn create_doc(_req: HttpRequest) -> impl Responder
 {
     "unimplemented"
 }
 
-#[get("/api/read_doc")]
+#[get("/document")]
 pub async fn read_doc(_req: HttpRequest) -> impl Responder
 {
     "unimplemented"
 }
 
-#[put("/api/update_doc")]
+#[put("/api/document")]
 pub async fn update_doc(_req: HttpRequest) -> impl Responder
 {
     "unimplemented"
 }
 
-#[delete("/api/delete_doc")]
+#[delete("/api/document")]
 pub async fn delete_doc(_req: HttpRequest) -> impl Responder
 {
     "unimplemented"
