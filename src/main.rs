@@ -27,7 +27,7 @@ pub fn establish_connection() -> PgConnection {
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Test 
 {
-    pub id: i32 , 
+    pub id: i64 , 
     pub text:String,
 }
 
@@ -38,12 +38,12 @@ mod schema;
 async fn test(connection: Data<Mutex<PgConnection>>) -> impl Responder
 {
     use std::borrow::Borrow;
-
     use schema::test;
+
     let connection = connection.lock().unwrap();
-    let conn = Borrow::borrow(&connection);
+    let connection:&PgConnection = Borrow::borrow(&connection);
     
-    let results = test::dsl::test.load::<Test>(conn).unwrap();
+    let results = test::dsl::test.load::<Test>(connection).unwrap();
 
     web::Json(results)
 }

@@ -1,6 +1,6 @@
 table! {
     test (id) {
-        id -> Integer, 
+        id -> BigInt, 
         text -> Text,
     }
 }
