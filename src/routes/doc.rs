@@ -1,4 +1,5 @@
 use actix_web::{
+    web::{Data},
     get,
     post,
     put,
@@ -7,10 +8,11 @@ use actix_web::{
     HttpRequest,
 };
 
-#[get("/test")]
-pub async fn test(_req: HttpRequest) -> impl Responder
+#[get("/fftest")]
+pub async fn test(_foo: Data<String>) -> impl Responder
 {
-    "test"
+    ""
+    //foo.into_inner().into_string();
 }
 
 #[post("/document")]

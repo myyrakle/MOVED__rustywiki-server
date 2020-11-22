@@ -57,7 +57,7 @@ appenders:
             pattern: "[{l}] {d(%Y-%m-%d %H:%M:%S %Z)(utc)} - {m}{n}"
 
 # Set the default logging level to "warn" and attach the "stdout" appender to the root
-root:
+root: 
     appenders:
         - stdout
         - trace

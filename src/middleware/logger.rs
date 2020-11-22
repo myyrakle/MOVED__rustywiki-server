@@ -10,7 +10,8 @@ pub struct Logger;
 
 impl Logger {
     pub fn new() -> Logger {
-        log4rs::init_file("log4rs.yml", Default::default()); //.expect("log4rs init failed");
+        // 계속 오류가 터지는데 왜인지는 모르겠음. 당장 동작에는 문제없음.
+        log4rs::init_file("log4rs.yml", Default::default()).unwrap_or(());
         Logger {}
     }
 }
