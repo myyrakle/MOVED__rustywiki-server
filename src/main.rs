@@ -1,6 +1,6 @@
 use std::env;
 
-use actix_web::{App, HttpServer, get,Responder, web};
+use actix_web::{App, HttpServer, get,Responder, web, HttpRequest};
 use std::sync::{Mutex};
 use actix_web::{web::Data};
 
@@ -36,17 +36,20 @@ mod schema;
 
 
 #[get("/test")]
-async fn test(connection: Data<Mutex<PgConnection>>) -> impl Responder
+async fn test(request: HttpRequest, connection: Data<Mutex<PgConnection>>) -> impl Responder
 {
     use std::borrow::Borrow;
     use schema::test;
 
-    let connection = connection.lock().unwrap();
-    let connection:&PgConnection = Borrow::borrow(&connection);
+    //let connection = connection.lock().unwrap();
+    //let connection:&PgConnection = Borrow::borrow(&connection);
     
-    let results = test::dsl::test.load::<Test>(connection).unwrap();
+    //let results = test::dsl::test.load::<Test>(connection).unwrap();
 
-    web::Json(results)
+    let auth: &middleware::AuthInfo = request.extensions().get().unwrap();
+    //println!("?{}", auth.is_authorized());
+
+    web::Json("results")
 }
 
 #[actix_rt::main]

@@ -1,8 +1,10 @@
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
+use std::rc;
+
 use actix_service::{Service, Transform};
-use actix_web::{dev::ServiceRequest, dev::ServiceResponse, Error};
+use actix_web::{dev::{ServiceRequest, ServiceResponse, Extensions}, Error, HttpRequest, FromRequest, web::Payload};
 use futures::future::{ok, Ready};
 use futures::Future;
 
@@ -52,6 +54,13 @@ pub struct AuthInfo
 
 impl AuthInfo 
 {
+    pub fn is_authorized(&self) -> bool {
+        self.authorized
+    }
+}
+
+impl AuthInfo 
+{
     pub fn new()-> AuthInfo
     {
         AuthInfo
@@ -81,10 +90,10 @@ where
     }
 
     // call
-    fn call(&mut self, request: ServiceRequest) -> Self::Future 
+    fn call(&mut self, mut request: ServiceRequest) -> Self::Future 
     {
         let path = request.path().to_string();
-        let token = request.headers().get("AUTHORIZAION").unwrap();
+        //let token = request.headers().get("AUTHORIZAION").unwrap();
 
         use diesel::*;
         //use std::borrow::Borrow;
@@ -95,9 +104,12 @@ where
 
         let mut auth = AuthInfo::new();
     
-        let (httpRequest, _) = &request.into_parts(); 
+        let mut extensions = Extensions::new();
+        extensions.insert(auth);
+        request.add_data_container(rc::Rc::new(extensions));
+        //let (httpRequest, _) = &request.into_parts(); 
         // httpRequest.extensions_mut().insert(auth);
-        httpRequest.extensions_mut().insert(auth);
+        //httpRequest.extensions_mut().insert(auth);
 
         let fut = self.service.call(request);
 
@@ -107,3 +119,29 @@ where
         })
     }
 }
+
+// struct Authorized;
+
+// impl FromRequest for Authorized {
+//     type Error = ();
+//     type Future = Result<(), Error>;
+//     type Config = ();
+
+//     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
+//         if is_authorized(req) {
+//             Ok(())
+//         } else {
+//             Err(())?
+//         }
+//     }
+// }
+
+// fn is_authorized(req: &HttpRequest) -> bool {
+//     if let Some(value) = req.headers().get("authorized") {
+//         // actual implementation that checks header here
+//         dbg!(value);
+//         true
+//     } else {
+//         false
+//     }
+// }
