@@ -15,7 +15,8 @@ use serde::{Serialize, Deserialize};
 mod middleware;
 mod routes;
 
-pub fn establish_connection() -> PgConnection {
+pub fn establish_connection() -> PgConnection 
+{
     dotenv::dotenv().ok();
 
     let database_url = std::env::var("DATABASE_URL")
@@ -49,7 +50,8 @@ async fn test(connection: Data<Mutex<PgConnection>>) -> impl Responder
 }
 
 #[actix_rt::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> std::io::Result<()> 
+{
     let _args: Vec<String> = env::args().collect();
 
     let host = "localhost"; //&args[1];
@@ -60,10 +62,13 @@ async fn main() -> std::io::Result<()> {
 
     let db = Data::new(Mutex::new(establish_connection()));
 
+    //let auth_info = Data::new(Mutex::new());
+
     HttpServer::new(move || {
         App::new()
             .app_data(db.clone())
             .wrap(middleware::Logger::new())
+            .wrap(middleware::Auth::new())
             .service(test)
             .service(routes::doc::create_doc)
             .service(routes::doc::update_doc)
