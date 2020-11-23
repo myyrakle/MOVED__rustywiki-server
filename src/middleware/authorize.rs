@@ -46,6 +46,8 @@ pub struct AuthMiddleware<S>
 pub struct AuthInfo
 {
     authorized: bool,
+    user_id: i64,
+    user_type: String, 
 }
 
 impl AuthInfo 
@@ -54,7 +56,9 @@ impl AuthInfo
     {
         AuthInfo
         {
-            authorized:false
+            authorized:false, 
+            user_id:-1,
+            user_type:"NO".into()
         }
     }
 }
@@ -70,29 +74,33 @@ where
     type Error = Error;
     type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
 
-    // 대기
+    // wating
     fn poll_ready(&mut self, context: &mut Context<'_>) -> Poll<Result<(), Self::Error>> 
     {
         self.service.poll_ready(context)
     }
 
-    // 호출될 경우
+    // call
     fn call(&mut self, request: ServiceRequest) -> Self::Future 
     {
         let path = request.path().to_string();
         let token = request.headers().get("AUTHORIZAION").unwrap();
 
         use diesel::*;
-        use std::borrow::Borrow;
+        //use std::borrow::Borrow;
         use std::sync::{Mutex};
         use actix_web::{web::Data};
 
-        //let f = request.app_data::<Data<Mutex<PgConnection>>>().unwrap();
-        //request.add_data_container(extensions: Rc<Extensions>)
-        //let connection = request.app_data().connection.lock().unwrap();
-        //let connection:&PgConnection = Borrow::borrow(&connection);
+        let f:&Data<Mutex<PgConnection>> = request.app_data().unwrap();
 
-        let fut = self.service.call(request);        
+        let mut auth = AuthInfo::new();
+    
+        let (httpRequest, _) = &request.into_parts(); 
+        // httpRequest.extensions_mut().insert(auth);
+        httpRequest.extensions_mut().insert(auth);
+
+        let fut = self.service.call(request);
+
         Box::pin(async move {
             let response = fut.await?;
             Ok(response)
