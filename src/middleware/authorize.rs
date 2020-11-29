@@ -4,16 +4,19 @@ use std::task::{Context, Poll};
 use std::rc;
 
 use actix_service::{Service, Transform};
-use actix_web::{dev::{ServiceRequest, ServiceResponse, Extensions}, Error, HttpRequest, FromRequest, web::Payload};
+use actix_web::{
+    dev::{Extensions, ServiceRequest, ServiceResponse},
+    error::PayloadError,
+    web::Payload,
+    Error, FromRequest, HttpRequest,
+};
 use futures::future::{ok, Ready};
 use futures::Future;
 
 pub struct Auth;
 
-impl Auth 
-{
-    pub fn new() -> Auth 
-    {
+impl Auth {
+    pub fn new() -> Auth {
         Auth {}
     }
 }
@@ -34,40 +37,33 @@ where
     type Transform = AuthMiddleware<S>;
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
-    fn new_transform(&self, service: S) -> Self::Future 
-    {
+    fn new_transform(&self, service: S) -> Self::Future {
         ok(AuthMiddleware { service })
     }
 }
 
-pub struct AuthMiddleware<S> 
-{
+pub struct AuthMiddleware<S> {
     service: S,
 }
 
-pub struct AuthInfo
-{
+pub struct AuthInfo {
     authorized: bool,
     user_id: i64,
-    user_type: String, 
+    user_type: String,
 }
 
-impl AuthInfo 
-{
+impl AuthInfo {
     pub fn is_authorized(&self) -> bool {
         self.authorized
     }
 }
 
-impl AuthInfo 
-{
-    pub fn new()-> AuthInfo
-    {
-        AuthInfo
-        {
-            authorized:false, 
-            user_id:-1,
-            user_type:"NO".into()
+impl AuthInfo {
+    pub fn new() -> AuthInfo {
+        AuthInfo {
+            authorized: false,
+            user_id: -1,
+            user_type: "NO".into(),
         }
     }
 }
@@ -84,34 +80,30 @@ where
     type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
 
     // wating
-    fn poll_ready(&mut self, context: &mut Context<'_>) -> Poll<Result<(), Self::Error>> 
-    {
+    fn poll_ready(&mut self, context: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.service.poll_ready(context)
     }
 
     // call
-    fn call(&mut self, mut request: ServiceRequest) -> Self::Future 
-    {
-        let path = request.path().to_string();
+    fn call(&mut self, request: ServiceRequest) -> Self::Future {
+        let _path = request.path().to_string();
         //let token = request.headers().get("AUTHORIZAION").unwrap();
 
         use diesel::*;
         //use std::borrow::Borrow;
-        use std::sync::{Mutex};
-        use actix_web::{web::Data};
+        use actix_web::web::Data;
+        use std::sync::Mutex;
 
-        let f:&Data<Mutex<PgConnection>> = request.app_data().unwrap();
+        let _f: &Data<Mutex<PgConnection>> = request.app_data().unwrap();
 
-        let mut auth = AuthInfo::new();
-    
-        let mut extensions = Extensions::new();
-        extensions.insert(auth);
-        request.add_data_container(rc::Rc::new(extensions));
-        //let (httpRequest, _) = &request.into_parts(); 
-        // httpRequest.extensions_mut().insert(auth);
-        //httpRequest.extensions_mut().insert(auth);
+        let auth = AuthInfo::new();
 
-        let fut = self.service.call(request);
+        let (request, _payload) = request.into_parts();
+        request.extensions_mut().insert(auth);
+
+        let service_request = ServiceRequest::from_request(request).unwrap();
+
+        let fut = self.service.call(service_request);
 
         Box::pin(async move {
             let response = fut.await?;

@@ -1,8 +1,11 @@
 use std::env;
 
-use actix_web::{App, HttpServer, get,Responder, web, HttpRequest};
-use std::sync::{Mutex};
-use actix_web::{web::Data};
+use actix_web::web::Data;
+use actix_web::{
+    dev::{Extensions, ServiceRequest, ServiceResponse},
+    get, web, App, HttpRequest, HttpServer, Responder,
+};
+use std::sync::Mutex;
 
 #[macro_use]
 extern crate diesel;
@@ -10,51 +13,44 @@ use diesel::*;
 //use diesel::table;
 //use diesel::prelude::*;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 mod middleware;
+use middleware::AuthInfo;
 mod routes;
 
-pub fn establish_connection() -> PgConnection 
-{
+pub fn establish_connection() -> PgConnection {
     dotenv::dotenv().ok();
 
-    let database_url = std::env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url)
-        .expect(&format!("Error connecting to {}", database_url))
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    PgConnection::establish(&database_url).expect(&format!("Error connecting to {}", database_url))
 }
 
 #[derive(Queryable, Serialize, Deserialize)]
-pub struct Test 
-{
-    pub id: i64 , 
-    pub text:String,
+pub struct Test {
+    pub id: i64,
+    pub text: String,
 }
 
-mod schema; 
-
+mod schema;
 
 #[get("/test")]
-async fn test(request: HttpRequest, connection: Data<Mutex<PgConnection>>) -> impl Responder
-{
-    use std::borrow::Borrow;
+async fn test(request: HttpRequest, connection: Data<Mutex<PgConnection>>) -> impl Responder {
     use schema::test;
+    use std::borrow::Borrow;
 
     //let connection = connection.lock().unwrap();
     //let connection:&PgConnection = Borrow::borrow(&connection);
-    
     //let results = test::dsl::test.load::<Test>(connection).unwrap();
 
-    let auth: &middleware::AuthInfo = request.extensions().get().unwrap();
+    let auth: &AuthInfo = request.extensions().get::<AuthInfo>().unwrap();
     //println!("?{}", auth.is_authorized());
 
     web::Json("results")
 }
 
 #[actix_rt::main]
-async fn main() -> std::io::Result<()> 
-{
+async fn main() -> std::io::Result<()> {
     let _args: Vec<String> = env::args().collect();
 
     let host = "localhost"; //&args[1];
