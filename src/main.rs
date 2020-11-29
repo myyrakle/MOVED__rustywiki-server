@@ -1,10 +1,7 @@
 use std::env;
 
 use actix_web::web::Data;
-use actix_web::{
-    dev::{Extensions, ServiceRequest, ServiceResponse},
-    get, web, App, HttpRequest, HttpServer, Responder,
-};
+use actix_web::{get, web, App, HttpRequest, HttpServer, Responder};
 use std::sync::Mutex;
 
 #[macro_use]
@@ -16,7 +13,6 @@ use diesel::*;
 use serde::{Deserialize, Serialize};
 
 mod middleware;
-use middleware::AuthInfo;
 mod routes;
 
 pub fn establish_connection() -> PgConnection {
@@ -35,18 +31,16 @@ pub struct Test {
 mod schema;
 
 #[get("/test")]
-async fn test(request: HttpRequest, connection: Data<Mutex<PgConnection>>) -> impl Responder {
-    use schema::test;
-    use std::borrow::Borrow;
+async fn test(request: HttpRequest, _connection: Data<Mutex<PgConnection>>) -> impl Responder {
+    let extensions = request.extensions();
+    let auth: &middleware::AuthInfo = extensions.get::<middleware::AuthInfo>().unwrap();
+    let text = if auth.is_authorized() {
+        "인증됨"
+    } else {
+        "인증 안됨"
+    };
 
-    //let connection = connection.lock().unwrap();
-    //let connection:&PgConnection = Borrow::borrow(&connection);
-    //let results = test::dsl::test.load::<Test>(connection).unwrap();
-
-    let auth: &AuthInfo = request.extensions().get::<AuthInfo>().unwrap();
-    //println!("?{}", auth.is_authorized());
-
-    web::Json("results")
+    web::Json(text)
 }
 
 #[actix_rt::main]
@@ -60,8 +54,6 @@ async fn main() -> std::io::Result<()> {
     let _ = listenfd::ListenFd::from_env();
 
     let db = Data::new(Mutex::new(establish_connection()));
-
-    //let auth_info = Data::new(Mutex::new());
 
     HttpServer::new(move || {
         App::new()

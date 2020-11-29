@@ -1,14 +1,10 @@
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
-use std::rc;
-
 use actix_service::{Service, Transform};
 use actix_web::{
-    dev::{Extensions, ServiceRequest, ServiceResponse},
-    error::PayloadError,
-    web::Payload,
-    Error, FromRequest, HttpRequest,
+    dev::{ServiceRequest, ServiceResponse},
+    Error,
 };
 use futures::future::{ok, Ready};
 use futures::Future;
@@ -68,6 +64,19 @@ impl AuthInfo {
     }
 }
 
+use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Claims {
+    aud: String, // Optional. Audience
+    exp: usize, // Required (validate_exp defaults to true in validation). Expiration time (as UTC timestamp)
+    iat: usize, // Optional. Issued at (as UTC timestamp)
+    iss: String, // Optional. Issuer
+    nbf: usize, // Optional. Not Before (as UTC timestamp)
+    sub: String, // Optional. Subject (whom token refers to)
+}
+
 impl<S, B> Service for AuthMiddleware<S>
 where
     S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
@@ -86,19 +95,39 @@ where
 
     // call
     fn call(&mut self, request: ServiceRequest) -> Self::Future {
-        let _path = request.path().to_string();
-        //let token = request.headers().get("AUTHORIZAION").unwrap();
-
-        use diesel::*;
-        //use std::borrow::Borrow;
-        use actix_web::web::Data;
-        use std::sync::Mutex;
-
-        let _f: &Data<Mutex<PgConnection>> = request.app_data().unwrap();
-
-        let auth = AuthInfo::new();
-
         let (request, _payload) = request.into_parts();
+
+        let _path = request.path().to_string();
+        let token = request.headers().get("AUTHORIZAION");
+
+        let mut auth = AuthInfo::new();
+
+        let key = b"foo";
+
+        if token.is_some() {
+            // 인증 처리
+            // ...
+            let token = token.unwrap().to_str().unwrap();
+
+            let decoded_result = jsonwebtoken::decode::<Claims>(
+                token,
+                &DecodingKey::from_secret(key),
+                &Validation::new(Algorithm::HS256),
+            );
+
+            if decoded_result.is_ok() {
+                use diesel::*;
+                //use std::borrow::Borrow;
+                use actix_web::web::Data;
+                use std::sync::Mutex;
+
+                let _f: &Data<Mutex<PgConnection>> = request.app_data().unwrap();
+
+                auth.authorized = true;
+                //Ok(decoded_result.unwrap().claims.data)
+            }
+        }
+
         request.extensions_mut().insert(auth);
 
         let service_request = ServiceRequest::from_request(request).unwrap();
@@ -111,29 +140,3 @@ where
         })
     }
 }
-
-// struct Authorized;
-
-// impl FromRequest for Authorized {
-//     type Error = ();
-//     type Future = Result<(), Error>;
-//     type Config = ();
-
-//     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
-//         if is_authorized(req) {
-//             Ok(())
-//         } else {
-//             Err(())?
-//         }
-//     }
-// }
-
-// fn is_authorized(req: &HttpRequest) -> bool {
-//     if let Some(value) = req.headers().get("authorized") {
-//         // actual implementation that checks header here
-//         dbg!(value);
-//         true
-//     } else {
-//         false
-//     }
-// }
