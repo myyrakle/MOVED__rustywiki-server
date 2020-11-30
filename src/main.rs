@@ -30,10 +30,14 @@ pub struct Test {
 
 mod schema;
 
+#[path = "value/auth.rs"]
+mod auth_value;
+use auth_value::AuthValue;
+
 #[get("/test")]
 async fn test(request: HttpRequest, _connection: Data<Mutex<PgConnection>>) -> impl Responder {
     let extensions = request.extensions();
-    let auth: &middleware::AuthInfo = extensions.get::<middleware::AuthInfo>().unwrap();
+    let auth: &AuthValue = extensions.get::<AuthValue>().unwrap();
     let text = if auth.is_authorized() {
         "인증됨"
     } else {

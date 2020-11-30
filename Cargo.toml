@@ -19,3 +19,4 @@ dotenv = "0.9.0"
 serde_json = "1"
 serde = { version = "1", features = ["derive"] }
 jsonwebtoken = "7.2.0"
+epoch-timestamp = "1.0.0"

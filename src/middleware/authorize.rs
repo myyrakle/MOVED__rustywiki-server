@@ -42,40 +42,12 @@ pub struct AuthMiddleware<S> {
     service: S,
 }
 
-pub struct AuthInfo {
-    authorized: bool,
-    user_id: i64,
-    user_type: String,
-}
+#[path = "../lib/jwt.rs"]
+mod jwt;
 
-impl AuthInfo {
-    pub fn is_authorized(&self) -> bool {
-        self.authorized
-    }
-}
-
-impl AuthInfo {
-    pub fn new() -> AuthInfo {
-        AuthInfo {
-            authorized: false,
-            user_id: -1,
-            user_type: "NO".into(),
-        }
-    }
-}
-
-use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Claims {
-    aud: String, // Optional. Audience
-    exp: usize, // Required (validate_exp defaults to true in validation). Expiration time (as UTC timestamp)
-    iat: usize, // Optional. Issued at (as UTC timestamp)
-    iss: String, // Optional. Issuer
-    nbf: usize, // Optional. Not Before (as UTC timestamp)
-    sub: String, // Optional. Subject (whom token refers to)
-}
+#[path = "../value/auth.rs"]
+mod auth_value;
+use auth_value::AuthValue;
 
 impl<S, B> Service for AuthMiddleware<S>
 where
@@ -100,22 +72,16 @@ where
         let _path = request.path().to_string();
         let token = request.headers().get("AUTHORIZAION");
 
-        let mut auth = AuthInfo::new();
-
-        let key = b"foo";
+        let mut auth = AuthValue::new();
 
         if token.is_some() {
             // 인증 처리
             // ...
-            let token = token.unwrap().to_str().unwrap();
+            let token = token.unwrap().to_str().unwrap().to_string();
 
-            let decoded_result = jsonwebtoken::decode::<Claims>(
-                token,
-                &DecodingKey::from_secret(key),
-                &Validation::new(Algorithm::HS256),
-            );
+            let decoded_result = jwt::verify(token);
 
-            if decoded_result.is_ok() {
+            if decoded_result.is_some() {
                 use diesel::*;
                 //use std::borrow::Borrow;
                 use actix_web::web::Data;
