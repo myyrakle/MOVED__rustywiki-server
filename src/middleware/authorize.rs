@@ -72,7 +72,7 @@ where
         let _path = request.path().to_string();
         let token = request.headers().get("AUTHORIZAION");
 
-        let mut auth = AuthValue::new();
+        let mut auth_value = AuthValue::new();
 
         if token.is_some() {
             // 인증 처리
@@ -89,12 +89,13 @@ where
 
                 let _f: &Data<Mutex<PgConnection>> = request.app_data().unwrap();
 
-                auth.authorized = true;
+                auth_value.set_values(true, 1, "f".into());
                 //Ok(decoded_result.unwrap().claims.data)
             }
         }
 
-        request.extensions_mut().insert(auth);
+        println!("도나");
+        request.extensions_mut().insert(auth_value);
 
         let service_request = ServiceRequest::from_request(request).unwrap();
 

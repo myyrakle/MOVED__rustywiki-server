@@ -13,7 +13,7 @@ fn read_key() -> String {
     use std::fs::File;
     use std::io::prelude::*;
 
-    let file = File::open("/env/key.txt");
+    let file = File::open("env/key.txt");
 
     if file.is_ok() {
         let mut file = file.unwrap();

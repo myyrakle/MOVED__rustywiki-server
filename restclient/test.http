@@ -1,0 +1,10 @@
+@host = localhost:11111
+@token = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoyLCJ1c2VyX3R5cGUiOiJmb28iLCJleHAiOjE2MDcwMzc2MTB9.IYQaiPTbem7BQAz0igSQBABJhzjI_QNrqegDrwLDftk
+
+###
+GET http://{{host}}/test
+Content-Type: application/json
+
+{
+}
+###
