@@ -1,5 +1,6 @@
 /// 인증 값 전달용 객체
 
+#[derive(std::fmt::Debug)]
 pub struct AuthValue {
     authorized: bool,
     user_id: i64,

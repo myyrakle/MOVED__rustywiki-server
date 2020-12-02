@@ -94,8 +94,10 @@ where
             }
         }
 
-        println!("도나");
         request.extensions_mut().insert(auth_value);
+
+        //let extensions = request.extensions();
+        //let auth: &AuthValue = extensions.get::<AuthValue>().unwrap();
 
         let service_request = ServiceRequest::from_request(request).unwrap();
 

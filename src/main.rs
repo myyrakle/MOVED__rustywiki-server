@@ -21,6 +21,9 @@ use std::sync::Mutex;
 async fn test(
     request: HttpRequest, /*, _connection: Data<Mutex<PgConnection>>*/
 ) -> impl Responder {
+    //let auth_value = AuthValue::new();
+    //request.extensions_mut().insert(auth_value);
+
     let extensions = request.extensions();
     let auth: &AuthValue = extensions.get::<AuthValue>().unwrap();
     let text = if auth.is_authorized() {
