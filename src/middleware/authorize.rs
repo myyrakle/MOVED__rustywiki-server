@@ -42,12 +42,7 @@ pub struct AuthMiddleware<S> {
     service: S,
 }
 
-#[path = "../lib/jwt.rs"]
-mod jwt;
-
-#[path = "../value/auth.rs"]
-mod auth_value;
-use auth_value::AuthValue;
+use super::super::lib::{jwt, AuthValue};
 
 impl<S, B> Service for AuthMiddleware<S>
 where
@@ -70,7 +65,9 @@ where
         let (request, _payload) = request.into_parts();
 
         let _path = request.path().to_string();
-        let token = request.headers().get("AUTHORIZAION");
+        let token = request.headers().get("authorization");
+
+        println!("{:?}", request.headers());
 
         let mut auth_value = AuthValue::new();
 
@@ -78,6 +75,7 @@ where
             // 인증 처리
             // ...
             let token = token.unwrap().to_str().unwrap().to_string();
+            println!("{}", token);
 
             let decoded_result = jwt::verify(token);
 

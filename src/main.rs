@@ -1,14 +1,13 @@
 #[macro_use]
 extern crate diesel;
 
-mod lib;
 mod middleware;
 mod routes;
 mod schema;
 
-#[path = "value/auth.rs"]
-mod auth_value;
-use auth_value::AuthValue;
+#[path = "lib/mod.rs"]
+mod lib;
+use lib::AuthValue;
 
 use actix_web::web::Data;
 use actix_web::{
@@ -58,9 +57,8 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .data(db.clone())
+            .app_data(db.clone())
             .wrap(middleware::Logger::new())
-            .wrap(middleware::Auth::new())
             .service(routes::auth::get_token)
             .service(test)
             .service(foo)
@@ -69,6 +67,7 @@ async fn main() -> std::io::Result<()> {
             .service(routes::doc::read_doc)
             .service(routes::doc::delete_doc)
             .service(actix_files::Files::new("/static", "static").show_files_listing())
+            .wrap(middleware::Auth::new())
     })
     .bind(address)?
     .run()
