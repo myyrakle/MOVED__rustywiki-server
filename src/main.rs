@@ -4,6 +4,7 @@ extern crate diesel;
 mod middleware;
 mod routes;
 mod schema;
+mod models;
 
 #[path = "lib/mod.rs"]
 mod lib;
@@ -54,11 +55,15 @@ async fn main() -> std::io::Result<()> {
     let _ = listenfd::ListenFd::from_env();
 
     let db = Data::new(Mutex::new(lib::establish_connection()));
-
     HttpServer::new(move || {
         App::new()
             .app_data(db.clone())
+            .wrap(
+                actix_cors::Cors::default()
+                    .allow_any_origin()
+                )
             .wrap(middleware::Logger::new())
+            .service(routes::auth::signup)
             .service(routes::auth::get_token)
             .service(test)
             .service(foo)

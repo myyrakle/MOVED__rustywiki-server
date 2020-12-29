@@ -1,4 +1,17 @@
 @host = localhost:11111
+
+
+### signup
+POST http://{{host}}/signup
+Content-Type: application/json
+
+{
+    "email":"sssanxg867",
+    "password": "asdf", 
+    "nickname": "aff"
+}
+###
+
 @token = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoyLCJ1c2VyX3R5cGUiOiJmb28iLCJleHAiOjE2MDcwNDY1MDh9.3wR_6qpBu0xJ433XmunLXowMfjw06XIGg-XcBC_PO24
 
 ###

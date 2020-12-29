@@ -1,0 +1,24 @@
+<html>
+    <body>
+        <button onclick = "foo()">버튼</button>
+    </body>
+    <script>
+        async function foo(){
+            const response = await fetch(
+                "http://localhost:11111/signup", 
+            {   
+                headers:{
+                    'Content-Type': 'application/json'
+                },
+                method: "post",
+                'Access-Control-Allow-Credentials': true, 
+                credentials: 'include', 
+                body: JSON.stringify({foo:'asdf'})
+            }); 
+            const json = await response.json();
+
+            alert(JSON.stringify(json));
+        }
+
+    </script>
+</html>
