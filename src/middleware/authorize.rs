@@ -3,6 +3,7 @@ use std::task::{Context, Poll};
 
 use actix_service::{Service, Transform};
 use actix_web::{
+    HttpRequest, error::PayloadError,
     dev::{ServiceRequest, ServiceResponse},
     Error,
 };
@@ -25,6 +26,7 @@ where
     S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
     S::Future: 'static,
     B: 'static,
+    (HttpRequest, actix_web::dev::Payload<Pin<Box<dyn futures::Stream<Item = std::result::Result<actix_web::web::Bytes, PayloadError>>>>>): std::fmt::Debug
 {
     type Request = ServiceRequest;
     type Response = ServiceResponse<B>;
@@ -49,6 +51,7 @@ where
     S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
     S::Future: 'static,
     B: 'static,
+    (HttpRequest, actix_web::dev::Payload<Pin<Box<dyn futures::Stream<Item = std::result::Result<actix_web::web::Bytes, PayloadError>>>>>): std::fmt::Debug
 {
     type Request = ServiceRequest;
     type Response = ServiceResponse<B>;
@@ -61,8 +64,9 @@ where
     }
 
     // call
-    fn call(&mut self, request: ServiceRequest) -> Self::Future {
-        let (request, _payload) = request.into_parts();
+    fn call(&mut self, request: ServiceRequest) -> Self::Future 
+    {
+        let (request, payload) = request.into_parts();
 
         let _path = request.path().to_string();
         let token = request.headers().get("authorization");
@@ -97,7 +101,8 @@ where
         //let extensions = request.extensions();
         //let auth: &AuthValue = extensions.get::<AuthValue>().unwrap();
 
-        let service_request = ServiceRequest::from_request(request).unwrap();
+        let service_request = ServiceRequest::from_parts(request, payload).unwrap();
+        //let service_request = ServiceRequest::from_parts(request, payload).ok().unwrap();
 
         let fut = self.service.call(service_request);
 

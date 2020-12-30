@@ -9,3 +9,15 @@ table! {
         reg_time -> Timestamp,
     }
 }
+
+table! {
+    test (id) {
+        id -> Int8,
+        text -> Nullable<Text>,
+    }
+}
+
+allow_tables_to_appear_in_same_query!(
+    tb_user,
+    test,
+);

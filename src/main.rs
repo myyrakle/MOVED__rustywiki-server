@@ -12,7 +12,7 @@ use lib::AuthValue;
 
 use actix_web::web::Data;
 use actix_web::{
-    dev::Body, get, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
+    dev::Body, get, http, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use diesel::*;
 use std::sync::Mutex;
@@ -60,7 +60,9 @@ async fn main() -> std::io::Result<()> {
             .app_data(db.clone())
             .wrap(
                 actix_cors::Cors::default()
-                    .allow_any_origin()
+                    .allowed_origin("http://localhost:11111")
+                    .allowed_origin("http://127.0.0.1:11111")
+                    .supports_credentials()
                 )
             .wrap(middleware::Logger::new())
             .service(routes::auth::signup)

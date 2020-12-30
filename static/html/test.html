@@ -2,19 +2,27 @@
     <body>
         <button onclick = "foo()">버튼</button>
     </body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
     <script>
         async function foo(){
-            const response = await fetch(
-                "http://localhost:11111/signup", 
-            {   
-                headers:{
-                    'Content-Type': 'application/json'
-                },
-                method: "post",
-                'Access-Control-Allow-Credentials': true, 
-                credentials: 'include', 
-                body: JSON.stringify({foo:'asdf'})
-            }); 
+            axios.defaults.baseURL = 'http://127.0.0.1:11111';
+            axios.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8';
+            axios.defaults.headers.post['Access-Control-Allow-Origin'] = '*';
+
+            const response = await axios.post(
+                "http://127.0.0.1:11111/signup", 
+                {   
+                    "email":"sssanxg867",
+                    "password": "asdf", 
+                    "nickname": "aff"
+                }, 
+                {
+                    headers:{
+                        'Content-Type': 'application/json'
+                    },
+                    withCredentials: true
+                }
+            ); 
             const json = await response.json();
 
             alert(JSON.stringify(json));
