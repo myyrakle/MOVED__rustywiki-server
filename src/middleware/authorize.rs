@@ -3,7 +3,6 @@ use std::task::{Context, Poll};
 
 use actix_service::{Service, Transform};
 use actix_web::{
-    HttpRequest, error::PayloadError,
     dev::{ServiceRequest, ServiceResponse},
     Error,
 };
@@ -26,7 +25,6 @@ where
     S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
     S::Future: 'static,
     B: 'static,
-    (HttpRequest, actix_web::dev::Payload<Pin<Box<dyn futures::Stream<Item = std::result::Result<actix_web::web::Bytes, PayloadError>>>>>): std::fmt::Debug
 {
     type Request = ServiceRequest;
     type Response = ServiceResponse<B>;
@@ -51,7 +49,6 @@ where
     S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
     S::Future: 'static,
     B: 'static,
-    (HttpRequest, actix_web::dev::Payload<Pin<Box<dyn futures::Stream<Item = std::result::Result<actix_web::web::Bytes, PayloadError>>>>>): std::fmt::Debug
 {
     type Request = ServiceRequest;
     type Response = ServiceResponse<B>;
@@ -101,8 +98,9 @@ where
         //let extensions = request.extensions();
         //let auth: &AuthValue = extensions.get::<AuthValue>().unwrap();
 
-        let service_request = ServiceRequest::from_parts(request, payload).unwrap();
-        //let service_request = ServiceRequest::from_parts(request, payload).ok().unwrap();
+        let service_request = ServiceRequest::from_parts(request, payload).ok().unwrap();
+
+        //let value = result.unwrap();
 
         let fut = self.service.call(service_request);
 

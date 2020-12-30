@@ -1,4 +1,5 @@
 use super::super::schema::{tb_user};
+use super::super::lib;
 
 #[derive(Insertable)]
 #[table_name="tb_user"]
@@ -10,11 +11,23 @@ pub struct InsertUser {
 
 impl InsertUser { 
     pub fn new(email: String, password: String, nickname: String) -> InsertUser {
-        // 패스워드 해싱 필요
+        let password = lib::hash(password);
+
         InsertUser{
             email: email,
             password: password,
             nickname: nickname,
         }
     }
+}
+
+#[derive(Queryable)]
+pub struct SelectUser {
+    pub id: i64, 
+    pub email: String, 
+    pub password: String, 
+    pub nickname: String, 
+    pub user_type: String, 
+    pub use_yn: bool,
+    pub reg_time: diesel::sql_types::Timestamp,
 }

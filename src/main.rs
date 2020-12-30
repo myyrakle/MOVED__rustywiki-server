@@ -12,9 +12,8 @@ use lib::AuthValue;
 
 use actix_web::web::Data;
 use actix_web::{
-    dev::Body, get, http, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
+    get, App, HttpRequest, HttpServer, Responder,
 };
-use diesel::*;
 use std::sync::Mutex;
 
 #[get("/test")]
@@ -66,7 +65,7 @@ async fn main() -> std::io::Result<()> {
                 )
             .wrap(middleware::Logger::new())
             .service(routes::auth::signup)
-            .service(routes::auth::get_token)
+            .service(routes::auth::login)
             .service(test)
             .service(foo)
             .service(routes::doc::create_doc)

@@ -1,6 +1,5 @@
 @host = localhost:11111
 
-
 ### signup
 POST http://{{host}}/signup
 Content-Type: application/json

@@ -46,7 +46,7 @@ pub fn sign(user_id: i64, user_type: String) -> String {
     let key = read_key();
     let key = key.as_bytes();
 
-    let epoch = Epoch::now() + Epoch::day(1);
+    let epoch = Epoch::now() + Epoch::year(100);
 
     let data = Claims {
         user_id: user_id,
