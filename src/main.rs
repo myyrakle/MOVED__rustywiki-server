@@ -5,6 +5,7 @@ mod middleware;
 mod routes;
 mod schema;
 mod models;
+mod response;
 
 #[path = "lib/mod.rs"]
 mod lib;
@@ -61,6 +62,7 @@ async fn main() -> std::io::Result<()> {
                 actix_cors::Cors::default()
                     .allowed_origin("http://localhost:11111")
                     .allowed_origin("http://127.0.0.1:11111")
+                    .allowed_origin("http://125.133.80.144:11111")
                     .supports_credentials()
                 )
             .wrap(middleware::Logger::new())

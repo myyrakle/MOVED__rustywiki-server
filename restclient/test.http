@@ -5,8 +5,8 @@ POST http://{{host}}/auth/signup
 Content-Type: application/json
 
 {
-    "email":"sssang97",
-    "password": "asdf", 
+    "email":"sssang977",
+    "passwords": "asdf", 
     "nickname": "asdf"
 }
 ###
@@ -16,7 +16,7 @@ POST http://{{host}}/auth/login
 Content-Type: application/json
 
 {
-    "email":"sssang97",
+    "email":"sssang977",
     "password": "asdf"
 }
 ###

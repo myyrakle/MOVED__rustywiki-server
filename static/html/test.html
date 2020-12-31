@@ -10,9 +10,9 @@
             axios.defaults.headers.post['Access-Control-Allow-Origin'] = '*';
 
             const response = await axios.post(
-                "http://127.0.0.1:11111/signup", 
+                "http://127.0.0.1:11111/auth/signup", 
                 {   
-                    "email":"sssanxg867",
+                    "email":"sssanxg8617",
                     "password": "asdf", 
                     "nickname": "aff"
                 }, 
@@ -23,7 +23,7 @@
                     withCredentials: true
                 }
             ); 
-            const json = await response.json();
+            const json = response.data;
 
             alert(JSON.stringify(json));
         }
