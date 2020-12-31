@@ -2,18 +2,14 @@
 
 #[derive(std::fmt::Debug)]
 pub struct AuthValue {
-    authorized: bool,
-    user_id: i64,
-    user_type: String,
+    pub authorized: bool,
+    pub user_id: i64,
+    pub user_type: String,
 }
 
 impl AuthValue {
     pub fn is_authorized(&self) -> bool {
         self.authorized
-    }
-
-    pub fn get_user_id(&self) -> i64 {
-        self.user_id
     }
 
     pub fn set_values(&mut self, authorized: bool, user_id: i64, user_type: String) {

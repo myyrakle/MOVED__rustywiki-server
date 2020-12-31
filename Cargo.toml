@@ -22,4 +22,4 @@ serde = { version = "1", features = ["derive"] }
 jsonwebtoken = "7.2.0"
 epoch-timestamp = "1.0.0"
 sha2 = "0.9.2"
-
+uuid = { version = "0.8.1", features = ["serde", "v4"] }

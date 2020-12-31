@@ -1,13 +1,23 @@
 @host = localhost:11111
 
 ### signup
-POST http://{{host}}/signup
+POST http://{{host}}/auth/signup
 Content-Type: application/json
 
 {
-    "email":"sssanxg867",
+    "email":"sssang97",
     "password": "asdf", 
-    "nickname": "aff"
+    "nickname": "asdf"
+}
+###
+
+### login
+POST http://{{host}}/auth/login
+Content-Type: application/json
+
+{
+    "email":"sssang97",
+    "password": "asdf"
 }
 ###
 

@@ -3,10 +3,11 @@ table! {
         id -> Int8,
         email -> Varchar,
         password -> Text,
+        salt -> Varchar,
         user_type -> Varchar,
         nickname -> Varchar,
         use_yn -> Bool,
-        reg_time -> Timestamp,
+        reg_utc -> Int8,
     }
 }
 
