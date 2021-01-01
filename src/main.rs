@@ -17,12 +17,10 @@ use actix_web::{
 };
 use std::sync::Mutex;
 
-#[get("/test")]
+#[get("/")]
 async fn test(
     request: HttpRequest, /*, _connection: Data<Mutex<PgConnection>>*/
 ) -> impl Responder {
-    //let auth_value = AuthValue::new();
-    //request.extensions_mut().insert(auth_value);
 
     let extensions = request.extensions();
     let auth: &AuthValue = extensions.get::<AuthValue>().unwrap();
@@ -32,16 +30,7 @@ async fn test(
         "인증 안됨"
     };
 
-    //let a = AuthValue::new();
-    //let a = [1, 3, 3, 4];
-
     text.to_string()
-    //HttpResponse::build(StatusCode::OK).json(a)
-}
-
-#[get("/foo")]
-async fn foo(_request: HttpRequest) -> impl Responder {
-    "foo".to_string()
 }
 
 #[actix_rt::main]
@@ -69,7 +58,6 @@ async fn main() -> std::io::Result<()> {
             .service(routes::auth::signup)
             .service(routes::auth::login)
             .service(test)
-            .service(foo)
             .service(routes::doc::create_doc)
             .service(routes::doc::update_doc)
             .service(routes::doc::read_doc)

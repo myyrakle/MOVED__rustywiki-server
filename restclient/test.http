@@ -21,12 +21,12 @@ Content-Type: application/json
 }
 ###
 
-@token = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoyLCJ1c2VyX3R5cGUiOiJmb28iLCJleHAiOjE2MDcwNDY1MDh9.3wR_6qpBu0xJ433XmunLXowMfjw06XIGg-XcBC_PO24
+@token = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJ1c2VyX3R5cGUiOiJhc2RmIiwiZXhwIjo0NzYzMDEzNjk0fQ.--PMVH0Bupk5-IaMe2FJPJ6yX54hau2EoMB5ArmTvC4
 
 ###
-GET http://{{host}}/test
+GET http://{{host}}
 Content-Type: application/json
-Authorization: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoyLCJ1c2VyX3R5cGUiOiJmb28iLCJleHAiOjE2MDcwNDY1MDh9.3wR_6qpBu0xJ433XmunLXowMfjw06XIGg-XcBC_PO24
+Authorization: {{token}}
 
 {
 }
