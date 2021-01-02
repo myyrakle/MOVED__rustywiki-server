@@ -1,21 +1,23 @@
+// standard
+use std::sync::Mutex;
+
+// thirdparty
 #[macro_use]
 extern crate diesel;
+use actix_web::web::Data;
+use actix_web::{
+    get, App, HttpRequest, HttpServer, Responder,
+};
 
+// in crate
 mod middleware;
 mod routes;
 mod schema;
 mod models;
 mod response;
-
-#[path = "lib/mod.rs"]
 mod lib;
-use lib::AuthValue;
 
-use actix_web::web::Data;
-use actix_web::{
-    get, App, HttpRequest, HttpServer, Responder,
-};
-use std::sync::Mutex;
+use lib::{AuthValue};
 
 #[get("/")]
 async fn test(
@@ -57,6 +59,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::Logger::new())
             .service(routes::auth::signup)
             .service(routes::auth::login)
+            .service(routes::image::image_upload)
             .service(test)
             .service(routes::doc::create_doc)
             .service(routes::doc::update_doc)

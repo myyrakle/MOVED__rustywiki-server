@@ -2,19 +2,6 @@
 -- and other internal bookkeeping. This file is safe to edit, any future
 -- changes will be added to existing projects as new migrations.
 
-CREATE TABLE "User" (
-	"id"	serial8	DEFAULT next	NOT NULL,
-	"email"	varchar(200)		NULL,
-	"password"	text	DEFAULT true	NOT NULL,
-	"user_type"	varchar(1)	DEFAULT 'U'	NOT NULL,
-	"nickname"	varchar(30)		NOT NULL,
-	"use_yn"	boolean		NULL,
-	"reg_time"	timestamp		NULL
-);
-
-ALTER TABLE "User" ADD CONSTRAINT "PK_USER" PRIMARY KEY (
-	"id"
-);
 
 
 -- Sets up a trigger for the given table to automatically set a column called
