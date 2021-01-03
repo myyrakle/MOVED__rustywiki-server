@@ -11,8 +11,11 @@ pub struct InsertUser {
 }
 
 impl InsertUser { 
-    pub fn new(email: String, password: String, salt: String, nickname: String) -> InsertUser {
-        let password = lib::hash(password);
+    pub fn new(email: String, password: String, nickname: String) -> InsertUser {
+        use uuid::Uuid;
+        let salt = Uuid::new_v4().to_string();
+
+        let password = lib::hash(password + &salt);
 
         InsertUser{
             email: email,

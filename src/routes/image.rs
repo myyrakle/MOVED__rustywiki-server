@@ -1,11 +1,13 @@
 // standard
 use std::sync::Mutex;
 use std::borrow::Borrow;
+use std::io::Write;
 
 // thirdparty
-use actix_multipart::Multipart;
+use actix_multipart::{Multipart};
+use futures::{StreamExt, TryStreamExt};
 use actix_web::{
-    http::StatusCode, post, HttpRequest, web::Data, HttpResponse, Responder, 
+    web, http::StatusCode, post, HttpRequest, web::Data, HttpResponse, Responder, 
 };
 use serde::{Deserialize, Serialize};
 use diesel::*;
@@ -26,7 +28,7 @@ pub struct ImageUploadResponse {
     pub image_too_big: bool,
 }
 
-#[post("/image/upload")]
+#[post("/image")]
 pub async fn image_upload(mut payload: Multipart, request: HttpRequest, connection: Data<Mutex<PgConnection>>) -> impl Responder {
     let connection = match connection.lock() {
         Err(_) => {
@@ -51,11 +53,29 @@ pub async fn image_upload(mut payload: Multipart, request: HttpRequest, connecti
         return HttpResponse::build(StatusCode::UNAUTHORIZED).json(response);
     }
 
-    let response = ImageUploadResponse{
+    while let Ok(Some(mut field)) = payload.try_next().await {
+        let content_type = field.content_disposition().unwrap();
+        let filename = content_type.get_filename().unwrap();
+        let filepath = format!("./tmp");
+
+        // File::create is blocking operation, use threadpool
+        let mut f = web::block(|| std::fs::File::create(filepath))
+            .await
+            .unwrap();
+
+        // Field in turn is stream of *Bytes* object
+        while let Some(chunk) = field.next().await {
+            let data = chunk.unwrap();
+            // filesystem operations are blocking, we have to use threadpool
+            f = web::block(move || f.write_all(&data).map(|_| f)).await.unwrap();
+        }
+    }
+
+    let response = ImageUploadResponse {
         success: true, 
         image_id: 0, 
-        image_url: "".to_owned(),
-        image_too_big: false,
+        image_url: "".to_owned(), 
+        image_too_big: false, 
     };
     HttpResponse::build(StatusCode::OK).json(response)
 }

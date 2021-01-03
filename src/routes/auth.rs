@@ -56,11 +56,8 @@ pub async fn signup(web::Json(body): web::Json<SignupParam>, connection: Data<Mu
         return HttpResponse::build(StatusCode::OK).json(response);
     } 
 
-    use uuid::Uuid;
-    let salt = Uuid::new_v4().to_string();
-
     // do signup
-    let insert_value = InsertUser::new(body.email, body.password + &salt, salt, body.nickname);
+    let insert_value = InsertUser::new(body.email, body.password, body.nickname);
 
     let execute_result = diesel::insert_into(tb_user::table)
         .values(insert_value)

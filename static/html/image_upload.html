@@ -1,0 +1,39 @@
+<html>
+    <body>
+        <form>
+            <input type="file" name="image" id="image" />
+        </form>
+        <button onclick = "foo()">버튼</button>
+    </body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <script>
+        async function foo(){
+            axios.defaults.baseURL = 'http://127.0.0.1:11111';
+            axios.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8';
+            axios.defaults.headers.post['Access-Control-Allow-Origin'] = '*';
+
+            const imageFile = document.getElementById("image");
+            const formDate = new FormDate();
+            //formDate.append()
+
+            // const response = await axios.post(
+            //     "http://127.0.0.1:11111/image", 
+            //     {   
+            //         "email":"sssanxg8617",
+            //         "password": "asdf", 
+            //         "nickname": "aff"
+            //     }, 
+            //     {
+            //         headers:{
+            //             'Content-Type': 'application/json'
+            //         },
+            //         withCredentials: true
+            //     }
+            // ); 
+            // const json = response.data;
+
+            // alert(JSON.stringify(json));
+        }
+
+    </script>
+</html>
