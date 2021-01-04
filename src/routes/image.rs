@@ -12,12 +12,13 @@ use actix_web::{
 use serde::{Deserialize, Serialize};
 use diesel::*;
 use diesel::dsl::{select, exists};
+use uuid::Uuid;
 
 // in crate
-use super::super::lib;
-use super::super::models::InsertUser;
-use super::super::schema::tb_user;
-use super::super::response::{ServerErrorResponse, UnauthorizedResponse};
+use crate::lib;
+use crate::models::InsertUser;
+use crate::schema::tb_user;
+use crate::response::{ServerErrorResponse, UnauthorizedResponse};
 use lib::{AuthValue};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -32,6 +33,7 @@ pub struct ImageUploadResponse {
 pub async fn image_upload(mut payload: Multipart, request: HttpRequest, connection: Data<Mutex<PgConnection>>) -> impl Responder {
     let connection = match connection.lock() {
         Err(_) => {
+            log::error!("database connection lock error");
             let response = ServerErrorResponse::new();
             return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
         }, 
@@ -54,20 +56,21 @@ pub async fn image_upload(mut payload: Multipart, request: HttpRequest, connecti
     }
 
     while let Ok(Some(mut field)) = payload.try_next().await {
-        let content_type = field.content_disposition().unwrap();
-        let filename = content_type.get_filename().unwrap();
-        let filepath = format!("./tmp");
+        let content_type = field.content_disposition().expect("1");
+        //let file_format = content_type.get_filename_ext().expect("2");
+        let filename = Uuid::new_v4().to_string();
+        let filepath = format!("./static/image/{}.{}", filename, "jpg");
 
         // File::create is blocking operation, use threadpool
         let mut f = web::block(|| std::fs::File::create(filepath))
             .await
-            .unwrap();
+            .expect("3");
 
         // Field in turn is stream of *Bytes* object
         while let Some(chunk) = field.next().await {
             let data = chunk.unwrap();
             // filesystem operations are blocking, we have to use threadpool
-            f = web::block(move || f.write_all(&data).map(|_| f)).await.unwrap();
+            f = web::block(move || f.write_all(&data).map(|_| f)).await.expect("4");
         }
     }
 

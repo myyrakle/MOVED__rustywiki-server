@@ -1,5 +1,5 @@
-use super::super::schema::{tb_user};
-use super::super::lib;
+use crate::schema::{tb_user};
+use crate::lib;
 
 #[derive(Insertable, Debug)]
 #[table_name="tb_user"]
@@ -13,6 +13,7 @@ pub struct InsertUser {
 impl InsertUser { 
     pub fn new(email: String, password: String, nickname: String) -> InsertUser {
         use uuid::Uuid;
+        
         let salt = Uuid::new_v4().to_string();
 
         let password = lib::hash(password + &salt);

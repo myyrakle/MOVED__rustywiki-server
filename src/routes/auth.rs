@@ -11,10 +11,10 @@ use diesel::*;
 use diesel::dsl::{select, exists};
 
 // in crate
-use super::super::lib;
-use super::super::models::InsertUser;
-use super::super::schema::tb_user;
-use super::super::response::{ServerErrorResponse};
+use crate::lib;
+use crate::models::InsertUser;
+use crate::schema::tb_user;
+use crate::response::{ServerErrorResponse};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct SignupParam {
@@ -30,11 +30,11 @@ pub struct SignupResponse {
     pub message: String,
 }
 
-
 #[post("/auth/signup")]
 pub async fn signup(web::Json(body): web::Json<SignupParam>, connection: Data<Mutex<PgConnection>>) -> impl Responder {
     let connection = match connection.lock() {
         Err(_) => {
+            log::error!("database connection lock error");
             let response = ServerErrorResponse::new();
             return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
         }, 
@@ -64,6 +64,7 @@ pub async fn signup(web::Json(body): web::Json<SignupParam>, connection: Data<Mu
         .execute(connection);
 
     if execute_result.is_err() {
+        log::error!("signup insert query error");
         let response = ServerErrorResponse::new();
         return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
     }
@@ -96,6 +97,7 @@ use super::super::models::SelectUser;
 pub async fn login(web::Json(body): web::Json<LoginParam>, connection: Data<Mutex<PgConnection>>) -> impl Responder {
     let connection = match connection.lock() {
         Err(_) => {
+            log::error!("database connection lock error");
             let response = ServerErrorResponse::new();
             return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
         }, 
@@ -150,6 +152,7 @@ pub async fn login(web::Json(body): web::Json<LoginParam>, connection: Data<Mute
             HttpResponse::build(StatusCode::OK).json(response)
         }
         Err(error) => {
+            log::error!("login select query error: {}", error);
             let response = LoginResponse {
                 success: false, 
                 login_failed: false, 
