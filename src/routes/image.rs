@@ -57,9 +57,11 @@ pub async fn image_upload(mut payload: Multipart, request: HttpRequest, connecti
 
     while let Ok(Some(mut field)) = payload.try_next().await {
         let content_type = field.content_disposition().expect("1");
-        //let file_format = content_type.get_filename_ext().expect("2");
+
+        let file_format = content_type.get_filename().expect("foo").split(".").last().unwrap_or("jpg");
+        
         let filename = Uuid::new_v4().to_string();
-        let filepath = format!("./static/image/{}.{}", filename, "jpg");
+        let filepath = format!("./static/image/{}.{}", filename, file_format);
 
         // File::create is blocking operation, use threadpool
         let mut f = web::block(|| std::fs::File::create(filepath))
