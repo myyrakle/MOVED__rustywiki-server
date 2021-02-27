@@ -39,7 +39,7 @@ async fn test(
 async fn main() -> std::io::Result<()> {
     let _args: Vec<String> = std::env::args().collect();
 
-    let host = "localhost"; //&args[1];
+    let host = "192.168.1.2"; //&args[1];
     let port = 11111; //&args[2];
     let address = format!("{}:{}", host, port);
 
