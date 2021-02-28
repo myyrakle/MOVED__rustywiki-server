@@ -47,10 +47,19 @@ CREATE TABLE "tb_image" (
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
 );
 
-CREATE TABLE "tb_token_blacklist" (
-	"token"	text		NOT NULL,
-	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
+CREATE TABLE "tb_refresh_token" (
+	"token_value"	text		NOT NULL,
+	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
+	"user_id"	int8		NOT NULL,
+	"dead_yn"	bool	DEFAULT false	NOT NULL,
+	"dead_utc"	int8		NULL
 );
+
+COMMENT ON COLUMN "tb_refresh_token"."user_id" IS '유저식별자';
+
+COMMENT ON COLUMN "tb_refresh_token"."dead_yn" IS '삭제여부';
+
+COMMENT ON COLUMN "tb_refresh_token"."dead_utc" IS '삭제일자';
 
 ALTER TABLE "tb_user" ADD CONSTRAINT "PK_TB_USER" PRIMARY KEY (
 	"id"
@@ -71,8 +80,8 @@ ALTER TABLE "tb_image" ADD CONSTRAINT "PK_TB_IMAGE" PRIMARY KEY (
 	"uploader_id"
 );
 
-ALTER TABLE "tb_token_blacklist" ADD CONSTRAINT "PK_TB_TOKEN_BLACKLIST" PRIMARY KEY (
-	"token"
+ALTER TABLE "tb_refresh_token" ADD CONSTRAINT "PK_TB_REFRESH_TOKEN" PRIMARY KEY (
+	"token_value"
 );
 
 ALTER TABLE "History" ADD CONSTRAINT "FK_tb_user_TO_History_1" FOREIGN KEY (
