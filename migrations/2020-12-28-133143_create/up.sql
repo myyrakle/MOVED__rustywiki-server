@@ -1,4 +1,5 @@
 -- Your SQL goes here
+-- 테이블 재정의시 diesel migration redo를 수행할것
 
 CREATE TABLE "tb_user" (
 	"id"	serial8		NOT NULL,
@@ -23,7 +24,7 @@ COMMENT ON COLUMN "tb_user"."reg_utc" IS '등록시간';
 
 CREATE TABLE "History" (
 	"id"	serial8		NOT NULL,
-	"writer_id"	int8	DEFAULT next	NOT NULL,
+	"writer_id"	int8	NOT NULL,
 	"document_id"	int8		NOT NULL,
 	"filepath"	text		NOT NULL,
 	"increase"	int8		NOT NULL,
@@ -40,10 +41,10 @@ COMMENT ON COLUMN "Document"."title" IS '문서 제목';
 
 CREATE TABLE "tb_image" (
 	"id"	serial		NOT NULL,
-	"uploader_id"	int8	DEFAULT next	NOT NULL,
+	"uploader_id"	int8	NOT NULL,
 	"domain"	text		NULL,
 	"path"	text		NOT NULL,
-	"use_yn"	booean	DEFAULT true	NOT NULL,
+	"use_yn"	bool	DEFAULT true	NOT NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
 );
 
@@ -82,26 +83,5 @@ ALTER TABLE "tb_image" ADD CONSTRAINT "PK_TB_IMAGE" PRIMARY KEY (
 
 ALTER TABLE "tb_refresh_token" ADD CONSTRAINT "PK_TB_REFRESH_TOKEN" PRIMARY KEY (
 	"token_value"
-);
-
-ALTER TABLE "History" ADD CONSTRAINT "FK_tb_user_TO_History_1" FOREIGN KEY (
-	"writer_id"
-)
-REFERENCES "tb_user" (
-	"id"
-);
-
-ALTER TABLE "History" ADD CONSTRAINT "FK_Document_TO_History_1" FOREIGN KEY (
-	"document_id"
-)
-REFERENCES "Document" (
-	"id"
-);
-
-ALTER TABLE "tb_image" ADD CONSTRAINT "FK_tb_user_TO_tb_image_1" FOREIGN KEY (
-	"uploader_id"
-)
-REFERENCES "tb_user" (
-	"id"
 );
 

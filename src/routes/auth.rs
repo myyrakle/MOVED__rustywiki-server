@@ -87,7 +87,8 @@ pub struct LoginParam {
 pub struct LoginResponse {
     pub success: bool, 
     pub login_failed: bool,
-    pub token: String,
+    pub access_token: String,
+    pub refresh_token: String,
     pub message: String,
 }
 
@@ -121,7 +122,8 @@ pub async fn login(web::Json(body): web::Json<LoginParam>, connection: Data<Mute
                 LoginResponse {
                     success: false, 
                     login_failed: true, 
-                    token: "".to_owned(), 
+                    access_token: "".to_owned(),
+                    refresh_token: "".to_owned(), 
                     message: "login failed".to_owned(),
                 }
             } else {
@@ -131,19 +133,28 @@ pub async fn login(web::Json(body): web::Json<LoginParam>, connection: Data<Mute
                 let password = lib::hash(password + salt);
                 
                 if password == user.password {
-                    let token = lib::jwt::sign(user.id, user.user_type.clone());
+                    use epoch_timestamp::Epoch;
+
+                    let epoch = (Epoch::now() + Epoch::year(1)) as usize;
+                    let refresh_token = lib::jwt::sign(epoch, user.id, user.user_type.clone());
+
+                    let epoch = (Epoch::now() + Epoch::hour(2)) as usize;
+                    let access_token = lib::jwt::sign(epoch, user.id, user.user_type.clone());
+
                     LoginResponse {
                         success: true, 
                         login_failed: false, 
-                        token: token, 
-                        message: "".to_owned(),
+                        access_token: access_token, 
+                        refresh_token: refresh_token,
+                        message: "success".to_owned(),
                     }
                 }
                 else {
                     LoginResponse {
                         success: false, 
                         login_failed: true, 
-                        token: "".to_owned(), 
+                        access_token: "".to_owned(),
+                        refresh_token: "".to_owned(), 
                         message: "login failed".to_owned(),
                     }
                 }
@@ -156,7 +167,8 @@ pub async fn login(web::Json(body): web::Json<LoginParam>, connection: Data<Mute
             let response = LoginResponse {
                 success: false, 
                 login_failed: false, 
-                token: "".to_owned(), 
+                access_token: "".to_owned(),
+                refresh_token: "".to_owned(),
                 message: error.to_string(),
             };
 

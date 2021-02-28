@@ -42,16 +42,18 @@ pub fn verify(token: String) -> Option<i64> {
     }
 }
 
-pub fn sign(user_id: i64, user_type: String) -> String {
+
+
+pub fn sign(exp: usize, user_id: i64, user_type: String) -> String {
     let key = read_key();
     let key = key.as_bytes();
 
-    let epoch = Epoch::now() + Epoch::year(100);
+    //let epoch = Epoch::now() + Epoch::year(100);
 
     let data = Claims {
         user_id: user_id,
         user_type: user_type,
-        exp: epoch as usize,
+        exp: exp,
     };
 
     let header = Header::new(Algorithm::HS256);
