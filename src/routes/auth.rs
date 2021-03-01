@@ -30,6 +30,7 @@ pub struct SignupResponse {
     pub message: String,
 }
 
+// 회원가입
 #[post("/auth/signup")]
 pub async fn signup(web::Json(body): web::Json<SignupParam>, connection: Data<Mutex<PgConnection>>) -> impl Responder {
     let connection = match connection.lock() {
@@ -56,7 +57,7 @@ pub async fn signup(web::Json(body): web::Json<SignupParam>, connection: Data<Mu
         return HttpResponse::build(StatusCode::OK).json(response);
     } 
 
-    // do signup
+    // 회원가입 데이터 삽입
     let insert_value = InsertUser::new(body.email, body.password, body.nickname);
 
     let execute_result = diesel::insert_into(tb_user::table)
@@ -92,8 +93,11 @@ pub struct LoginResponse {
     pub message: String,
 }
 
-use super::super::models::SelectUser;
+use crate::models::SelectUser;
+use crate::models::InsertRefreshToken;
+use crate::schema::tb_refresh_token;
 
+// 로그인
 #[post("/auth/login")]
 pub async fn login(web::Json(body): web::Json<LoginParam>, connection: Data<Mutex<PgConnection>>) -> impl Responder {
     let connection = match connection.lock() {
@@ -135,9 +139,22 @@ pub async fn login(web::Json(body): web::Json<LoginParam>, connection: Data<Mute
                 if password == user.password {
                     use epoch_timestamp::Epoch;
 
+                    // 리프레시 토큰 생성 및 DB에 삽입
                     let epoch = (Epoch::now() + Epoch::year(1)) as usize;
                     let refresh_token = lib::jwt::sign(epoch, user.id, user.user_type.clone());
 
+                    let insert_value = InsertRefreshToken{token_value: refresh_token.clone(), user_id: user.id};
+                    let execute_result = diesel::insert_into(tb_refresh_token::table)
+                        .values(insert_value)
+                        .execute(connection);
+
+                    if execute_result.is_err() {
+                        log::error!("refresh token insert query error");
+                        let response = ServerErrorResponse::new();
+                        return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+                    }
+
+                    // 액세스 토큰 생성
                     let epoch = (Epoch::now() + Epoch::hour(2)) as usize;
                     let access_token = lib::jwt::sign(epoch, user.id, user.user_type.clone());
 
