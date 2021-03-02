@@ -4,7 +4,7 @@ use std::borrow::Borrow;
 
 // thirdparty
 use actix_web::{
-    http::StatusCode, post, web, web::Data, HttpResponse, Responder, 
+    http::StatusCode, post, delete, put, web, web::Data, HttpResponse, Responder, 
 };
 use serde::{Deserialize, Serialize};
 use diesel::*;
@@ -186,6 +186,62 @@ pub async fn login(web::Json(body): web::Json<LoginParam>, connection: Data<Mute
                 login_failed: false, 
                 access_token: "".to_owned(),
                 refresh_token: "".to_owned(),
+                message: error.to_string(),
+            };
+
+            HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct LogoutParam {
+    pub refresh_token: String, 
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct LogoutResponse {
+    pub success: bool, 
+    pub message: String,
+}
+
+// 로그아웃
+#[delete("/auth/logout")]
+pub async fn logout(web::Json(body): web::Json<LogoutParam>, connection: Data<Mutex<PgConnection>>) -> impl Responder {
+    let connection = match connection.lock() {
+        Err(_) => {
+            log::error!("database connection lock error");
+            let response = ServerErrorResponse::new();
+            return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+        }, 
+        Ok(connection) => connection,
+    };
+    let connection:&PgConnection = Borrow::borrow(&connection);
+
+    let token = 
+        tb_refresh_token::dsl::tb_refresh_token
+        .filter(tb_refresh_token::dsl::token_value.eq(&body.refresh_token))
+        .filter(tb_refresh_token::dsl::dead_yn.eq(false));
+
+    let result = connection.transaction(|| {
+        diesel::update(token).set(tb_refresh_token::dsl::dead_yn.eq_all(true)).execute(connection)?;
+        diesel::update(token).set(tb_refresh_token::dsl::dead_utc.eq_all(epoch_timestamp::Epoch::now() as i64)).execute(connection)
+    });
+
+    match result {
+        Ok(_) => {
+            let response = 
+                LogoutResponse {
+                    success: true, 
+                    message: "logout success".to_owned(),
+                };
+           
+            HttpResponse::build(StatusCode::OK).json(response)
+        }
+        Err(error) => {
+            log::error!("logout error: {}", error);
+            let response = LogoutResponse {
+                success: false, 
                 message: error.to_string(),
             };
 

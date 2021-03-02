@@ -59,6 +59,8 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::Logger::new())
             .service(routes::auth::signup)
             .service(routes::auth::login)
+            .service(routes::auth::logout)
+            //.service(routes::auth::refresh)
             .service(routes::image::image_upload)
             .service(test)
             .service(routes::doc::create_doc)
