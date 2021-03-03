@@ -305,15 +305,15 @@ pub async fn refresh(web::Json(body): web::Json<RefreshParam>, connection: Data<
 
                         match result {
                             Ok(select_user) => {
+
+                                let response = 
                                 if select_user.is_empty() {
-                                    let response = RefreshResponse {
+                                    RefreshResponse {
                                         success: false, 
                                         expired: false,
                                         access_token: "".into(),
                                         message: "user not exists".to_owned(),
-                                    };
-
-                                    HttpResponse::build(StatusCode::OK).json(response)
+                                    }
                                 } else {
                                     let user_type= select_user[0].user_type.clone();
 
@@ -321,14 +321,15 @@ pub async fn refresh(web::Json(body): web::Json<RefreshParam>, connection: Data<
                                     let epoch = (Epoch::now() + Epoch::hour(1)) as usize;
                                     let access_token = lib::jwt::sign(epoch, user_id, user_type);
 
-                                    let response = RefreshResponse {
+                                    RefreshResponse {
                                         success: true, 
                                         expired: false,
                                         access_token: access_token,
                                         message: "refresh success".to_owned(),
-                                    };
-                                    HttpResponse::build(StatusCode::OK).json(response)
-                                }
+                                    }
+                                };
+
+                                HttpResponse::build(StatusCode::OK).json(response)
                             }, 
                             Err(error) => {
                                 log::error!("database error");
