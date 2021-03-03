@@ -155,7 +155,7 @@ pub async fn login(web::Json(body): web::Json<LoginParam>, connection: Data<Mute
                     }
 
                     // 액세스 토큰 생성
-                    let epoch = (Epoch::now() + Epoch::hour(2)) as usize;
+                    let epoch = (Epoch::now() + Epoch::hour(1)) as usize;
                     let access_token = lib::jwt::sign(epoch, user.id, user.user_type.clone());
 
                     LoginResponse {
@@ -246,6 +246,124 @@ pub async fn logout(web::Json(body): web::Json<LogoutParam>, connection: Data<Mu
             };
 
             HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct RefreshParam {
+    pub refresh_token: String, 
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct RefreshResponse {
+    pub success: bool, 
+    pub expired: bool,
+    pub access_token: String,
+    pub message: String,
+}
+
+
+use crate::lib::{jwt, AuthValue};
+use epoch_timestamp::Epoch;
+
+// 액세스 토큰 갱신
+#[put("/auth/refresh")]
+pub async fn refresh(web::Json(body): web::Json<RefreshParam>, connection: Data<Mutex<PgConnection>>) -> impl Responder {
+    let connection = match connection.lock() {
+        Err(_) => {
+            log::error!("database connection lock error");
+            let response = ServerErrorResponse::new();
+            return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+        }, 
+        Ok(connection) => connection,
+    };
+    let connection:&PgConnection = Borrow::borrow(&connection);
+
+    use diesel::dsl::{select, exists};
+
+    let query = 
+        select(exists(tb_refresh_token::dsl::tb_refresh_token
+        .filter(tb_refresh_token::dsl::token_value.eq(&body.refresh_token))
+        .filter(tb_refresh_token::dsl::dead_yn.eq(false))
+    ));
+
+    let result = query.get_result(connection);
+
+    match result {
+        Ok(exists) => {
+            if exists {
+                let decoded_result = jwt::verify(body.refresh_token);
+
+                let response = match decoded_result {
+                    Some(user_id) => {
+                        let query = 
+                            tb_user::dsl::tb_user
+                            .filter(tb_user::dsl::id.eq(&user_id));
+
+                        let result = query.load::<SelectUser>(connection);
+
+                        match result {
+                            Ok(select_user) => {
+                                if select_user.is_empty() {
+                                    let response = RefreshResponse {
+                                        success: false, 
+                                        expired: false,
+                                        access_token: "".into(),
+                                        message: "user not exists".to_owned(),
+                                    };
+
+                                    HttpResponse::build(StatusCode::OK).json(response)
+                                } else {
+                                    let user_type= select_user[0].user_type.clone();
+
+                                    // 액세스 토큰 생성
+                                    let epoch = (Epoch::now() + Epoch::hour(1)) as usize;
+                                    let access_token = lib::jwt::sign(epoch, user_id, user_type);
+
+                                    let response = RefreshResponse {
+                                        success: true, 
+                                        expired: false,
+                                        access_token: access_token,
+                                        message: "refresh success".to_owned(),
+                                    };
+                                    HttpResponse::build(StatusCode::OK).json(response)
+                                }
+                            }, 
+                            Err(error) => {
+                                log::error!("database error");
+                                let response = ServerErrorResponse::new();
+                                HttpResponse::build(StatusCode::OK).json(response)
+                            }
+                        }
+                    }
+                    None => {
+                        let response = RefreshResponse {
+                            success: false, 
+                            expired: true,
+                            access_token: "".into(),
+                            message: "logout success".to_owned(),
+                        };
+                        HttpResponse::build(StatusCode::OK).json(response)
+                    }
+                };
+                
+                response
+            }
+            else {
+                let response = RefreshResponse {
+                    success: false, 
+                    expired: true,
+                    access_token: "".into(),
+                    message: "logout success".to_owned(),
+                };
+                HttpResponse::build(StatusCode::OK).json(response)
+            }
+        }, 
+        Err(_) => {
+            log::error!("database error");
+            let response = ServerErrorResponse::new();
+            return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
         }
     }
 }

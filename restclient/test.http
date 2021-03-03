@@ -1,12 +1,12 @@
-@host = localhost:11111
+@host = 192.168.1.2:11111
 
 ### signup
 POST http://{{host}}/auth/signup
 Content-Type: application/json
 
 {
-    "email":"sssang977",
-    "passwords": "asdf", 
+    "email":"ffffasdf@naver.com",
+    "password": "asdf", 
     "nickname": "asdf"
 }
 ###

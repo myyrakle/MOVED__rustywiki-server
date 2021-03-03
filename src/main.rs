@@ -1,5 +1,5 @@
 // standard
-use std::sync::Mutex;
+use std::{convert::TryInto, sync::Mutex};
 
 // thirdparty
 #[macro_use]
@@ -35,6 +35,53 @@ async fn test(
     text.to_string()
 }
 
+use std::borrow::Borrow;
+use diesel::*;
+use diesel::dsl::{select, exists};
+use schema::tb_user;
+
+#[get("/foo")]
+async fn foo(
+    connection: Data<Mutex<PgConnection>>
+) -> impl Responder {
+    let connection = match connection.lock() {
+        Err(_) => {
+            log::error!("database connection lock error");
+            return "error".to_string();
+        }, 
+        Ok(connection) => connection,
+    };
+    let connection:&PgConnection = Borrow::borrow(&connection);
+
+    // 첫번째 쿼리 생성
+    let target = 
+        tb_user::dsl::tb_user.filter(tb_user::dsl::id.eq(2));
+    let query = 
+        diesel::update(target)
+            .set(tb_user::dsl::nickname.eq("응우옌"));
+
+    // 두번째 쿼리 생성
+    let target = 
+        tb_user::dsl::tb_user.filter(tb_user::dsl::id.eq(2));
+    let query2 = 
+        diesel::update(target)
+            .set(tb_user::dsl::email.eq("foobar@gmail.com"));
+
+    //실행
+    use diesel::result::Error;
+    let result = connection.transaction::<_, Error, _>(||{
+        query.execute(connection)?;
+        query2.execute(connection)?;
+
+        Err(Error::RollbackTransaction)
+    });
+
+    match result {
+        Ok(_) => "성공",
+        Err(_) => "실패",
+    }.to_string()
+}
+
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     let _args: Vec<String> = std::env::args().collect();
@@ -61,6 +108,7 @@ async fn main() -> std::io::Result<()> {
             .service(routes::auth::login)
             .service(routes::auth::logout)
             //.service(routes::auth::refresh)
+            .service(foo)
             .service(routes::image::image_upload)
             .service(test)
             .service(routes::doc::create_doc)

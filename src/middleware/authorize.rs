@@ -42,7 +42,7 @@ pub struct AuthMiddleware<S> {
     service: S,
 }
 
-use super::super::lib::{jwt, AuthValue};
+use crate::lib::{jwt, AuthValue};
 
 impl<S, B> Service for AuthMiddleware<S>
 where
