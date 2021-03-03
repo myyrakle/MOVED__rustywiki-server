@@ -1,4 +1,3 @@
-use epoch_timestamp::Epoch;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
@@ -42,8 +41,6 @@ pub fn verify(token: String) -> Option<i64> {
     }
 }
 
-
-
 pub fn sign(exp: usize, user_id: i64, user_type: String) -> String {
     let key = read_key();
     let key = key.as_bytes();
@@ -59,4 +56,16 @@ pub fn sign(exp: usize, user_id: i64, user_type: String) -> String {
     let header = Header::new(Algorithm::HS256);
 
     jsonwebtoken::encode::<Claims>(&header, &data, &EncodingKey::from_secret(key)).unwrap()
+}
+
+use epoch_timestamp::Epoch;
+
+pub fn create_access_token(user_id: i64, user_type: String) -> String {
+    let epoch = (Epoch::now() + Epoch::hour(1)) as usize;
+    sign(epoch, user_id, user_type)
+}
+
+pub fn create_refresh_token(user_id: i64, user_type: String) -> String {
+    let epoch = (Epoch::now() + Epoch::year(1)) as usize;
+    sign(epoch, user_id, user_type)
 }

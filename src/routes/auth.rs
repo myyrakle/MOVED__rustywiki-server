@@ -1,61 +1,64 @@
 // standard
-use std::sync::Mutex;
 use std::borrow::Borrow;
+use std::sync::Mutex;
 
 // thirdparty
-use actix_web::{
-    http::StatusCode, post, delete, put, web, web::Data, HttpResponse, Responder, 
-};
-use serde::{Deserialize, Serialize};
+use actix_web::{delete, http::StatusCode, post, put, web, web::Data, HttpResponse, Responder};
+use diesel::dsl::{exists, select};
 use diesel::*;
-use diesel::dsl::{select, exists};
+use serde::{Deserialize, Serialize};
 
 // in crate
 use crate::lib;
 use crate::models::InsertUser;
+use crate::response::ServerErrorResponse;
 use crate::schema::tb_user;
-use crate::response::{ServerErrorResponse};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct SignupParam {
-    pub email: String, 
-    pub password: String, 
+    pub email: String,
+    pub password: String,
     pub nickname: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct SignupResponse {
-    pub success: bool, 
+    pub success: bool,
     pub email_duplicated: bool,
     pub message: String,
 }
 
 // 회원가입
 #[post("/auth/signup")]
-pub async fn signup(web::Json(body): web::Json<SignupParam>, connection: Data<Mutex<PgConnection>>) -> impl Responder {
+pub async fn signup(
+    web::Json(body): web::Json<SignupParam>,
+    connection: Data<Mutex<PgConnection>>,
+) -> impl Responder {
     let connection = match connection.lock() {
         Err(_) => {
             log::error!("database connection lock error");
             let response = ServerErrorResponse::new();
             return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
-        }, 
+        }
         Ok(connection) => connection,
     };
-    let connection:&PgConnection = Borrow::borrow(&connection);
+    let connection: &PgConnection = Borrow::borrow(&connection);
 
     // email duplicated check
     let already_exists = select(exists(
-        tb_user::dsl::tb_user.filter(tb_user::dsl::email.eq(body.email.clone())))
-    ).get_result(connection).unwrap();
+        tb_user::dsl::tb_user.filter(tb_user::dsl::email.eq(body.email.clone())),
+    ))
+    .get_result(connection)
+    .unwrap();
 
-    if already_exists { 
-        let response = SignupResponse{
-            success:false, 
-            email_duplicated: true, 
-            message: "email already exists".to_owned()
+    if already_exists {
+        let response = SignupResponse {
+            success: false,
+            email_duplicated: true,
+            message: "email already exists".to_owned(),
         };
         return HttpResponse::build(StatusCode::OK).json(response);
-    } 
+    }
 
     // 회원가입 데이터 삽입
     let insert_value = InsertUser::new(body.email, body.password, body.nickname);
@@ -70,64 +73,65 @@ pub async fn signup(web::Json(body): web::Json<SignupParam>, connection: Data<Mu
         return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
     }
 
-    let response = SignupResponse{
-        success: true, 
-        email_duplicated: false, 
-        message: "".to_owned()
+    let response = SignupResponse {
+        success: true,
+        email_duplicated: false,
+        message: "".to_owned(),
     };
     HttpResponse::build(StatusCode::OK).json(response)
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct LoginParam {
-    pub email: String, 
-    pub password: String, 
+    pub email: String,
+    pub password: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct LoginResponse {
-    pub success: bool, 
+    pub success: bool,
     pub login_failed: bool,
     pub access_token: String,
     pub refresh_token: String,
     pub message: String,
 }
 
-use crate::models::SelectUser;
 use crate::models::InsertRefreshToken;
+use crate::models::SelectUser;
 use crate::schema::tb_refresh_token;
 
 // 로그인
 #[post("/auth/login")]
-pub async fn login(web::Json(body): web::Json<LoginParam>, connection: Data<Mutex<PgConnection>>) -> impl Responder {
+pub async fn login(
+    web::Json(body): web::Json<LoginParam>,
+    connection: Data<Mutex<PgConnection>>,
+) -> impl Responder {
     let connection = match connection.lock() {
         Err(_) => {
             log::error!("database connection lock error");
             let response = ServerErrorResponse::new();
             return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
-        }, 
+        }
         Ok(connection) => connection,
     };
-    let connection:&PgConnection = Borrow::borrow(&connection);
+    let connection: &PgConnection = Borrow::borrow(&connection);
 
-    let LoginParam{email, password} = body;
+    let LoginParam { email, password } = body;
 
-    let query = 
-        tb_user::dsl::tb_user
+    let query = tb_user::dsl::tb_user
         .filter(tb_user::dsl::email.eq(&email))
         .filter(tb_user::dsl::use_yn.eq(true));
 
-    let user_result = 
-        query.load::<SelectUser>(connection);
+    let user_result = query.load::<SelectUser>(connection);
 
     match user_result {
         Ok(users) => {
             let response = if users.is_empty() {
                 LoginResponse {
-                    success: false, 
-                    login_failed: true, 
+                    success: false,
+                    login_failed: true,
                     access_token: "".to_owned(),
-                    refresh_token: "".to_owned(), 
+                    refresh_token: "".to_owned(),
                     message: "login failed".to_owned(),
                 }
             } else {
@@ -135,15 +139,16 @@ pub async fn login(web::Json(body): web::Json<LoginParam>, connection: Data<Mute
                 let salt = &user.salt;
 
                 let password = lib::hash(password + salt);
-                
+
                 if password == user.password {
-                    use epoch_timestamp::Epoch;
-
                     // 리프레시 토큰 생성 및 DB에 삽입
-                    let epoch = (Epoch::now() + Epoch::year(1)) as usize;
-                    let refresh_token = lib::jwt::sign(epoch, user.id, user.user_type.clone());
+                    let refresh_token =
+                        lib::jwt::create_refresh_token(user.id, user.user_type.clone());
 
-                    let insert_value = InsertRefreshToken{token_value: refresh_token.clone(), user_id: user.id};
+                    let insert_value = InsertRefreshToken {
+                        token_value: refresh_token.clone(),
+                        user_id: user.id,
+                    };
                     let execute_result = diesel::insert_into(tb_refresh_token::table)
                         .values(insert_value)
                         .execute(connection);
@@ -151,39 +156,39 @@ pub async fn login(web::Json(body): web::Json<LoginParam>, connection: Data<Mute
                     if execute_result.is_err() {
                         log::error!("refresh token insert query error");
                         let response = ServerErrorResponse::new();
-                        return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+                        return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR)
+                            .json(response);
                     }
 
                     // 액세스 토큰 생성
-                    let epoch = (Epoch::now() + Epoch::hour(1)) as usize;
-                    let access_token = lib::jwt::sign(epoch, user.id, user.user_type.clone());
+                    let access_token =
+                        lib::jwt::create_access_token(user.id, user.user_type.clone());
 
                     LoginResponse {
-                        success: true, 
-                        login_failed: false, 
-                        access_token: access_token, 
+                        success: true,
+                        login_failed: false,
+                        access_token: access_token,
                         refresh_token: refresh_token,
                         message: "success".to_owned(),
                     }
-                }
-                else {
+                } else {
                     LoginResponse {
-                        success: false, 
-                        login_failed: true, 
+                        success: false,
+                        login_failed: true,
                         access_token: "".to_owned(),
-                        refresh_token: "".to_owned(), 
+                        refresh_token: "".to_owned(),
                         message: "login failed".to_owned(),
                     }
                 }
             };
-            
+
             HttpResponse::build(StatusCode::OK).json(response)
         }
         Err(error) => {
             log::error!("login select query error: {}", error);
             let response = LoginResponse {
-                success: false, 
-                login_failed: false, 
+                success: false,
+                login_failed: false,
                 access_token: "".to_owned(),
                 refresh_token: "".to_owned(),
                 message: error.to_string(),
@@ -196,52 +201,57 @@ pub async fn login(web::Json(body): web::Json<LoginParam>, connection: Data<Mute
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct LogoutParam {
-    pub refresh_token: String, 
+    pub refresh_token: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct LogoutResponse {
-    pub success: bool, 
+    pub success: bool,
     pub message: String,
 }
 
 // 로그아웃
 #[delete("/auth/logout")]
-pub async fn logout(web::Json(body): web::Json<LogoutParam>, connection: Data<Mutex<PgConnection>>) -> impl Responder {
+pub async fn logout(
+    web::Json(body): web::Json<LogoutParam>,
+    connection: Data<Mutex<PgConnection>>,
+) -> impl Responder {
     let connection = match connection.lock() {
         Err(_) => {
             log::error!("database connection lock error");
             let response = ServerErrorResponse::new();
             return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
-        }, 
+        }
         Ok(connection) => connection,
     };
-    let connection:&PgConnection = Borrow::borrow(&connection);
+    let connection: &PgConnection = Borrow::borrow(&connection);
 
-    let token = 
-        tb_refresh_token::dsl::tb_refresh_token
+    let token = tb_refresh_token::dsl::tb_refresh_token
         .filter(tb_refresh_token::dsl::token_value.eq(&body.refresh_token))
         .filter(tb_refresh_token::dsl::dead_yn.eq(false));
 
     let result = connection.transaction(|| {
-        diesel::update(token).set(tb_refresh_token::dsl::dead_yn.eq_all(true)).execute(connection)?;
-        diesel::update(token).set(tb_refresh_token::dsl::dead_utc.eq_all(epoch_timestamp::Epoch::now() as i64)).execute(connection)
+        diesel::update(token)
+            .set(tb_refresh_token::dsl::dead_yn.eq_all(true))
+            .execute(connection)?;
+        diesel::update(token)
+            .set(tb_refresh_token::dsl::dead_utc.eq_all(epoch_timestamp::Epoch::now() as i64))
+            .execute(connection)
     });
 
     match result {
         Ok(_) => {
-            let response = 
-                LogoutResponse {
-                    success: true, 
-                    message: "logout success".to_owned(),
-                };
-           
+            let response = LogoutResponse {
+                success: true,
+                message: "logout success".to_owned(),
+            };
+
             HttpResponse::build(StatusCode::OK).json(response)
         }
         Err(error) => {
             log::error!("logout error: {}", error);
             let response = LogoutResponse {
-                success: false, 
+                success: false,
                 message: error.to_string(),
             };
 
@@ -252,40 +262,41 @@ pub async fn logout(web::Json(body): web::Json<LogoutParam>, connection: Data<Mu
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct RefreshParam {
-    pub refresh_token: String, 
+    pub refresh_token: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct RefreshResponse {
-    pub success: bool, 
+    pub success: bool,
     pub expired: bool,
     pub access_token: String,
     pub message: String,
 }
 
-
 use crate::lib::{jwt, AuthValue};
-use epoch_timestamp::Epoch;
 
 // 액세스 토큰 갱신
 #[put("/auth/refresh")]
-pub async fn refresh(web::Json(body): web::Json<RefreshParam>, connection: Data<Mutex<PgConnection>>) -> impl Responder {
+pub async fn refresh(
+    web::Json(body): web::Json<RefreshParam>,
+    connection: Data<Mutex<PgConnection>>,
+) -> impl Responder {
     let connection = match connection.lock() {
         Err(_) => {
             log::error!("database connection lock error");
             let response = ServerErrorResponse::new();
             return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
-        }, 
+        }
         Ok(connection) => connection,
     };
-    let connection:&PgConnection = Borrow::borrow(&connection);
+    let connection: &PgConnection = Borrow::borrow(&connection);
 
-    use diesel::dsl::{select, exists};
+    use diesel::dsl::{exists, select};
 
-    let query = 
-        select(exists(tb_refresh_token::dsl::tb_refresh_token
-        .filter(tb_refresh_token::dsl::token_value.eq(&body.refresh_token))
-        .filter(tb_refresh_token::dsl::dead_yn.eq(false))
+    let query = select(exists(
+        tb_refresh_token::dsl::tb_refresh_token
+            .filter(tb_refresh_token::dsl::token_value.eq(&body.refresh_token))
+            .filter(tb_refresh_token::dsl::dead_yn.eq(false)),
     ));
 
     let result = query.get_result(connection);
@@ -297,32 +308,28 @@ pub async fn refresh(web::Json(body): web::Json<RefreshParam>, connection: Data<
 
                 let response = match decoded_result {
                     Some(user_id) => {
-                        let query = 
-                            tb_user::dsl::tb_user
-                            .filter(tb_user::dsl::id.eq(&user_id));
+                        let query = tb_user::dsl::tb_user.filter(tb_user::dsl::id.eq(&user_id));
 
                         let result = query.load::<SelectUser>(connection);
 
                         match result {
                             Ok(select_user) => {
-
-                                let response = 
-                                if select_user.is_empty() {
+                                let response = if select_user.is_empty() {
                                     RefreshResponse {
-                                        success: false, 
+                                        success: false,
                                         expired: false,
                                         access_token: "".into(),
                                         message: "user not exists".to_owned(),
                                     }
                                 } else {
-                                    let user_type= select_user[0].user_type.clone();
+                                    let user_type = select_user[0].user_type.clone();
 
                                     // 액세스 토큰 생성
-                                    let epoch = (Epoch::now() + Epoch::hour(1)) as usize;
-                                    let access_token = lib::jwt::sign(epoch, user_id, user_type);
+                                    let access_token =
+                                        lib::jwt::create_access_token(user_id, user_type);
 
                                     RefreshResponse {
-                                        success: true, 
+                                        success: true,
                                         expired: false,
                                         access_token: access_token,
                                         message: "refresh success".to_owned(),
@@ -330,7 +337,7 @@ pub async fn refresh(web::Json(body): web::Json<RefreshParam>, connection: Data<
                                 };
 
                                 HttpResponse::build(StatusCode::OK).json(response)
-                            }, 
+                            }
                             Err(error) => {
                                 log::error!("database error");
                                 let response = ServerErrorResponse::new();
@@ -340,7 +347,7 @@ pub async fn refresh(web::Json(body): web::Json<RefreshParam>, connection: Data<
                     }
                     None => {
                         let response = RefreshResponse {
-                            success: false, 
+                            success: false,
                             expired: true,
                             access_token: "".into(),
                             message: "logout success".to_owned(),
@@ -348,19 +355,18 @@ pub async fn refresh(web::Json(body): web::Json<RefreshParam>, connection: Data<
                         HttpResponse::build(StatusCode::OK).json(response)
                     }
                 };
-                
+
                 response
-            }
-            else {
+            } else {
                 let response = RefreshResponse {
-                    success: false, 
+                    success: false,
                     expired: true,
                     access_token: "".into(),
                     message: "logout success".to_owned(),
                 };
                 HttpResponse::build(StatusCode::OK).json(response)
             }
-        }, 
+        }
         Err(_) => {
             log::error!("database error");
             let response = ServerErrorResponse::new();
