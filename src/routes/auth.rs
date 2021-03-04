@@ -169,6 +169,7 @@ pub async fn login(
                         message: "success".to_owned(),
                     }
                 } else {
+                    log::info!("로그인 실패: 패스워드 불일치");
                     LoginResponse {
                         success: false,
                         login_failed: true,
@@ -334,7 +335,7 @@ pub async fn refresh(
                                 HttpResponse::build(StatusCode::OK).json(response)
                             }
                             Err(error) => {
-                                log::error!("database error");
+                                log::error!("database error: {:?}", error);
                                 let response = ServerErrorResponse::new();
                                 HttpResponse::build(StatusCode::OK).json(response)
                             }
@@ -362,8 +363,8 @@ pub async fn refresh(
                 HttpResponse::build(StatusCode::OK).json(response)
             }
         }
-        Err(_) => {
-            log::error!("database error");
+        Err(error) => {
+            log::error!("database error: {:?}", error);
             let response = ServerErrorResponse::new();
             return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
         }

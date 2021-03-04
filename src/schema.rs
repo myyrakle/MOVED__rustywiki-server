@@ -1,23 +1,4 @@
 table! {
-    Document (id) {
-        id -> Int8,
-        title -> Text,
-        reg_utc -> Int8,
-    }
-}
-
-table! {
-    History (id, writer_id, document_id) {
-        id -> Int8,
-        writer_id -> Int8,
-        document_id -> Int8,
-        filepath -> Text,
-        increase -> Int8,
-        reg_date -> Int8,
-    }
-}
-
-table! {
     tb_debate (id, document_id, writer_id) {
         id -> Int8,
         document_id -> Int8,
@@ -102,8 +83,6 @@ table! {
 }
 
 allow_tables_to_appear_in_same_query!(
-    Document,
-    History,
     tb_debate,
     tb_debate_comment,
     tb_document,
