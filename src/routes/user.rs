@@ -43,7 +43,7 @@ pub async fn my_info(
     let auth: &AuthValue = extensions.get::<AuthValue>().unwrap();
     if !auth.is_authorized() {
         let response = UnauthorizedResponse::new();
-        return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+        return HttpResponse::build(StatusCode::UNAUTHORIZED).json(response);
     }
 
     let select_user = tb_user::dsl::tb_user
@@ -97,7 +97,7 @@ pub async fn close_my_account(
     let auth: &AuthValue = extensions.get::<AuthValue>().unwrap();
     if !auth.is_authorized() {
         let response = UnauthorizedResponse::new();
-        return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+        return HttpResponse::build(StatusCode::UNAUTHORIZED).json(response);
     }
 
     let update_filter = tb_user::dsl::tb_user

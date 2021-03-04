@@ -28,7 +28,7 @@ CREATE TABLE "tb_document_history" (
 	"document_id"	int8		NOT NULL,
 	"filepath"	text		NOT NULL,
 	"increase"	int8		NOT NULL,
-	"reg_date"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
+	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
 );
 
 COMMENT ON COLUMN "tb_document_history"."writer_id" IS '작성자 식별자';

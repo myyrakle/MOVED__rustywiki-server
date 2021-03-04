@@ -36,7 +36,7 @@ table! {
         document_id -> Int8,
         filepath -> Text,
         increase -> Int8,
-        reg_date -> Int8,
+        reg_utc -> Int8,
     }
 }
 
