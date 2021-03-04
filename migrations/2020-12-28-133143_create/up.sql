@@ -88,3 +88,5 @@ ALTER TABLE "tb_refresh_token" ADD CONSTRAINT "PK_TB_REFRESH_TOKEN" PRIMARY KEY 
 );
 
 
+-- 추가
+CREATE unique index "tb_document_title_unique" on "tb_document"("title");

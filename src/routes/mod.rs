@@ -6,3 +6,6 @@ pub use auth::*;
 
 pub mod image;
 pub use image::*;
+
+pub mod user;
+pub use user::*;
