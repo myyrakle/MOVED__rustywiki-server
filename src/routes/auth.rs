@@ -346,7 +346,7 @@ pub async fn refresh(
                             success: false,
                             expired: true,
                             access_token: "".into(),
-                            message: "logout success".to_owned(),
+                            message: "logout failed".to_owned(),
                         };
                         HttpResponse::build(StatusCode::OK).json(response)
                     }
@@ -358,7 +358,7 @@ pub async fn refresh(
                     success: false,
                     expired: true,
                     access_token: "".into(),
-                    message: "logout success".to_owned(),
+                    message: "logout failed".to_owned(),
                 };
                 HttpResponse::build(StatusCode::OK).json(response)
             }

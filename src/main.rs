@@ -79,6 +79,8 @@ async fn main() -> std::io::Result<()> {
             .service(routes::auth::refresh)
             .service(foo)
             .service(routes::image::image_upload)
+            .service(routes::user::my_info)
+            .service(routes::user::close_my_account)
             .service(test)
             .service(routes::doc::create_doc)
             .service(routes::doc::update_doc)

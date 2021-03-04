@@ -1,8 +1,47 @@
 @host = 192.168.1.2:11111
 
+@access_token = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoyLCJ1c2VyX3R5cGUiOiLquYDrtojri60iLCJleHAiOjE2MTQ4NzA0NjJ9.R5tzRCmx1taGfv-oE-fEFS53pCfyvaZRyd7ufJD2nPw
+@refresh_token = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoyLCJ1c2VyX3R5cGUiOiLquYDrtojri60iLCJleHAiOjE2NDY0MDIzNjN9.adeeA0eg2UwSag2WUR1vPUk1k1hcD45n38QI2OUI2ug
+
+### 액세스 토큰 갱신
+PUT http://{{host}}/auth/refresh
+Content-Type: application/json
+
+{
+    "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoyLCJ1c2VyX3R5cGUiOiLquYDrtojri60iLCJleHAiOjE2NDY0MDIzNjN9.adeeA0eg2UwSag2WUR1vPUk1k1hcD45n38QI2OUI2ug"
+}
+###
+
+### 로그아웃
+DELETE http://{{host}}/auth/logout
+Content-Type: application/json
+
+{
+    "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoyLCJ1c2VyX3R5cGUiOiLquYDrtojri60iLCJleHAiOjE2NDY0MDIzNjN9.adeeA0eg2UwSag2WUR1vPUk1k1hcD45n38QI2OUI2ug"
+}
+###
+
 ### signup
 GET http://{{host}}/foo
 Content-Type: application/json
+
+{
+}
+###
+
+### 내 정보 조회
+GET http://{{host}}/user/my-info
+Content-Type: application/json
+Authorization: {{access_token}}
+
+{
+}
+###
+
+### 회원탈퇴
+GET http://{{host}}/user/close-my-account
+Content-Type: application/json
+Authorization: {{access_token}}
 
 {
 }
