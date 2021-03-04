@@ -8,7 +8,7 @@ CREATE TABLE "tb_user" (
 	"password"	text		NOT NULL,
 	"user_type"	varchar(10)	DEFAULT 'USER'	NOT NULL,
 	"nickname"	varchar(30)		NOT NULL,
-	"use_yn"	boolean	DEFAULT true	NOT NULL,
+	"use_yn"	bool	DEFAULT true	NOT NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
 );
 
@@ -24,12 +24,14 @@ COMMENT ON COLUMN "tb_user"."reg_utc" IS '등록시간';
 
 CREATE TABLE "tb_document_history" (
 	"id"	serial8		NOT NULL,
-	"writer_id"	int8 	NOT NULL,
+	"writer_id"	int8		NOT NULL,
 	"document_id"	int8		NOT NULL,
 	"filepath"	text		NOT NULL,
 	"increase"	int8		NOT NULL,
 	"reg_date"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
 );
+
+COMMENT ON COLUMN "tb_document_history"."writer_id" IS '작성자 식별자';
 
 CREATE TABLE "tb_document" (
 	"id"	serial8		NOT NULL,
@@ -63,6 +65,27 @@ COMMENT ON COLUMN "tb_refresh_token"."dead_yn" IS '삭제여부';
 
 COMMENT ON COLUMN "tb_refresh_token"."dead_utc" IS '삭제일자';
 
+CREATE TABLE "tb_debate" (
+	"id"	serial8		NOT NULL,
+	"document_id"	int8		NOT NULL,
+	"writer_id"	int8		NOT NULL,
+	"subject"	text		NOT NULL,
+	"content"	text		NOT NULL,
+	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
+	"open_yn"	bool	DEFAULT true	NOT NULL
+);
+
+COMMENT ON COLUMN "tb_debate"."subject" IS '토론 주제';
+
+CREATE TABLE "tb_debate_comment" (
+	"id"	serial8		NOT NULL,
+	"id2"	int8		NOT NULL,
+	"writer_id"	int8		NOT NULL,
+	"content"	text		NOT NULL,
+	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
+	"open_yn"	bool	DEFAULT true	NOT NULL
+);
+
 ALTER TABLE "tb_user" ADD CONSTRAINT "PK_TB_USER" PRIMARY KEY (
 	"id"
 );
@@ -85,6 +108,18 @@ ALTER TABLE "tb_image" ADD CONSTRAINT "PK_TB_IMAGE" PRIMARY KEY (
 ALTER TABLE "tb_refresh_token" ADD CONSTRAINT "PK_TB_REFRESH_TOKEN" PRIMARY KEY (
 	"token_value",
 	"user_id"
+);
+
+ALTER TABLE "tb_debate" ADD CONSTRAINT "PK_TB_DEBATE" PRIMARY KEY (
+	"id",
+	"document_id",
+	"writer_id"
+);
+
+ALTER TABLE "tb_debate_comment" ADD CONSTRAINT "PK_TB_DEBATE_COMMENT" PRIMARY KEY (
+	"id",
+	"id2",
+	"writer_id"
 );
 
 

@@ -18,6 +18,29 @@ table! {
 }
 
 table! {
+    tb_debate (id, document_id, writer_id) {
+        id -> Int8,
+        document_id -> Int8,
+        writer_id -> Int8,
+        subject -> Text,
+        content -> Text,
+        reg_utc -> Int8,
+        open_yn -> Bool,
+    }
+}
+
+table! {
+    tb_debate_comment (id, id2, writer_id) {
+        id -> Int8,
+        id2 -> Int8,
+        writer_id -> Int8,
+        content -> Text,
+        reg_utc -> Int8,
+        open_yn -> Bool,
+    }
+}
+
+table! {
     tb_document (id) {
         id -> Int8,
         title -> Text,
@@ -81,6 +104,8 @@ table! {
 allow_tables_to_appear_in_same_query!(
     Document,
     History,
+    tb_debate,
+    tb_debate_comment,
     tb_document,
     tb_document_history,
     tb_image,

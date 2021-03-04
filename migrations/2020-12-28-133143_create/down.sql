@@ -5,4 +5,6 @@ drop table tb_image;
 drop table tb_refresh_token;
 drop table tb_document;
 drop table tb_document_history;
+drop table tb_debate;
+drop table tb_debate_comment;
 -- drop table tb_image;
