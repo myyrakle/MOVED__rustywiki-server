@@ -18,6 +18,25 @@ table! {
 }
 
 table! {
+    tb_document (id) {
+        id -> Int8,
+        title -> Text,
+        reg_utc -> Int8,
+    }
+}
+
+table! {
+    tb_document_history (id, writer_id, document_id) {
+        id -> Int8,
+        writer_id -> Int8,
+        document_id -> Int8,
+        filepath -> Text,
+        increase -> Int8,
+        reg_date -> Int8,
+    }
+}
+
+table! {
     tb_image (id, uploader_id) {
         id -> Int4,
         uploader_id -> Int8,
@@ -25,14 +44,15 @@ table! {
         path -> Text,
         use_yn -> Bool,
         reg_utc -> Int8,
+        Field -> Nullable<Varchar>,
     }
 }
 
 table! {
-    tb_refresh_token (token_value) {
+    tb_refresh_token (token_value, user_id) {
         token_value -> Text,
-        reg_utc -> Int8,
         user_id -> Int8,
+        reg_utc -> Int8,
         dead_yn -> Bool,
         dead_utc -> Nullable<Int8>,
     }
@@ -61,6 +81,8 @@ table! {
 allow_tables_to_appear_in_same_query!(
     Document,
     History,
+    tb_document,
+    tb_document_history,
     tb_image,
     tb_refresh_token,
     tb_user,

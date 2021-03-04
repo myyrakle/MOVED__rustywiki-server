@@ -10,9 +10,10 @@ use serde::{Deserialize, Serialize};
 
 // in crate
 use crate::lib;
-use crate::models::InsertUser;
+use crate::lib::jwt;
+use crate::models::{InsertRefreshToken, InsertUser, SelectUser};
 use crate::response::ServerErrorResponse;
-use crate::schema::tb_user;
+use crate::schema::{tb_refresh_token, tb_user};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct SignupParam {
@@ -95,10 +96,6 @@ pub struct LoginResponse {
     pub refresh_token: String,
     pub message: String,
 }
-
-use crate::models::InsertRefreshToken;
-use crate::models::SelectUser;
-use crate::schema::tb_refresh_token;
 
 // 로그인
 #[post("/auth/login")]
@@ -272,8 +269,6 @@ pub struct RefreshResponse {
     pub access_token: String,
     pub message: String,
 }
-
-use crate::lib::{jwt, AuthValue};
 
 // 액세스 토큰 갱신
 #[put("/auth/refresh")]

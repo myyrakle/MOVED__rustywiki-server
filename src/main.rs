@@ -1,29 +1,26 @@
 // standard
-use std::{convert::TryInto, sync::Mutex};
+use std::sync::Mutex;
 
 // thirdparty
 #[macro_use]
 extern crate diesel;
 use actix_web::web::Data;
-use actix_web::{
-    get, App, HttpRequest, HttpServer, Responder,
-};
+use actix_web::{get, App, HttpRequest, HttpServer, Responder};
 
 // in crate
+mod lib;
 mod middleware;
-mod routes;
-mod schema;
 mod models;
 mod response;
-mod lib;
+mod routes;
+mod schema;
 
-use lib::{AuthValue};
+use lib::AuthValue;
 
 #[get("/")]
 async fn test(
     request: HttpRequest, /*, _connection: Data<Mutex<PgConnection>>*/
 ) -> impl Responder {
-
     let extensions = request.extensions();
     let auth: &AuthValue = extensions.get::<AuthValue>().unwrap();
     let text = if auth.is_authorized() {
@@ -35,51 +32,23 @@ async fn test(
     text.to_string()
 }
 
-use std::borrow::Borrow;
+//use diesel::dsl::{exists, select};
 use diesel::*;
-use diesel::dsl::{select, exists};
-use schema::tb_user;
+//use schema::tb_user;
+use std::borrow::Borrow;
 
 #[get("/foo")]
-async fn foo(
-    connection: Data<Mutex<PgConnection>>
-) -> impl Responder {
+async fn foo(connection: Data<Mutex<PgConnection>>) -> impl Responder {
     let connection = match connection.lock() {
         Err(_) => {
             log::error!("database connection lock error");
             return "error".to_string();
-        }, 
+        }
         Ok(connection) => connection,
     };
-    let connection:&PgConnection = Borrow::borrow(&connection);
+    let _connection: &PgConnection = Borrow::borrow(&connection);
 
-    // 첫번째 쿼리 생성
-    let target = 
-        tb_user::dsl::tb_user.filter(tb_user::dsl::id.eq(2));
-    let query = 
-        diesel::update(target)
-            .set(tb_user::dsl::nickname.eq("응우옌"));
-
-    // 두번째 쿼리 생성
-    let target = 
-        tb_user::dsl::tb_user.filter(tb_user::dsl::id.eq(2));
-    let query2 = 
-        diesel::update(target)
-            .set(tb_user::dsl::email.eq("foobar@gmail.com"));
-
-    //실행
-    use diesel::result::Error;
-    let result = connection.transaction::<_, Error, _>(||{
-        query.execute(connection)?;
-        query2.execute(connection)?;
-
-        Err(Error::RollbackTransaction)
-    });
-
-    match result {
-        Ok(_) => "성공",
-        Err(_) => "실패",
-    }.to_string()
+    "".to_string()
 }
 
 #[actix_rt::main]
@@ -101,13 +70,13 @@ async fn main() -> std::io::Result<()> {
                     .allowed_origin("http://localhost:11111")
                     .allowed_origin("http://127.0.0.1:11111")
                     .allowed_origin("http://125.133.80.144:11111")
-                    .supports_credentials()
-                )
+                    .supports_credentials(),
+            )
             .wrap(middleware::Logger::new())
             .service(routes::auth::signup)
             .service(routes::auth::login)
             .service(routes::auth::logout)
-            //.service(routes::auth::refresh)
+            .service(routes::auth::refresh)
             .service(foo)
             .service(routes::image::image_upload)
             .service(test)
