@@ -1,13 +1,21 @@
 @host = 192.168.1.2:11111
 
 ### signup
+GET http://{{host}}/foo
+Content-Type: application/json
+
+{
+}
+###
+
+### signup
 POST http://{{host}}/auth/signup
 Content-Type: application/json
 
 {
-    "email":"ffffasdf@naver.com",
+    "email":"foobar2@naver.com",
     "password": "asdf", 
-    "nickname": "asdf"
+    "nickname": "김불닭"
 }
 ###
 
@@ -16,7 +24,7 @@ POST http://{{host}}/auth/login
 Content-Type: application/json
 
 {
-    "email":"sssang977",
+    "email":"foobar2@naver.com",
     "password": "asdf"
 }
 ###
