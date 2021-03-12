@@ -39,7 +39,7 @@ Authorization: {{access_token}}
 ###
 
 ### 회원탈퇴
-GET http://{{host}}/user/close-my-account
+DELETE http://{{host}}/user/close-my-account
 Content-Type: application/json
 Authorization: {{access_token}}
 

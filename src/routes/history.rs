@@ -4,7 +4,7 @@ use std::sync::Mutex;
 
 // thirdparty
 use actix_web::{
-    get, http::StatusCode, post, put, web, web::Data, HttpRequest, HttpResponse, Responder,
+    delete, get, http::StatusCode, post, put, web::Data, HttpRequest, HttpResponse, Responder,
 };
 use diesel::*;
 use serde::{Deserialize, Serialize};
@@ -16,21 +16,20 @@ use crate::response::{ServerErrorResponse, UnauthorizedResponse};
 //use crate::schema::tb_user;
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct WriteDocParam {
+pub struct CreateDocParam {
     pub title: String,
     pub content: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct WriteDocResponse {
+pub struct CreateDocResponse {
     pub success: bool,
     pub email_duplicated: bool,
     pub message: String,
 }
 
 #[post("/doc/document")]
-pub async fn write_doc(
-    web::Json(_body): web::Json<WriteDocParam>,
+pub async fn create_doc(
     request: HttpRequest,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
@@ -56,12 +55,12 @@ pub async fn write_doc(
     return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
 }
 
-#[derive(Deserialize, Serialize, Debug)]
-pub struct ReadDocParam {
-    pub title: String,
-}
-
 #[get("/doc/document")]
 pub async fn read_doc(_req: HttpRequest) -> impl Responder {
+    "unimplemented"
+}
+
+#[put("/doc/document")]
+pub async fn update_doc(_req: HttpRequest) -> impl Responder {
     "unimplemented"
 }
