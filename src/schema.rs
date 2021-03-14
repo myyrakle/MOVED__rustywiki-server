@@ -25,6 +25,7 @@ table! {
     tb_document (id) {
         id -> Int8,
         title -> Text,
+        recent_history_id -> Nullable<Int8>,
         reg_utc -> Int8,
     }
 }
@@ -41,14 +42,24 @@ table! {
 }
 
 table! {
-    tb_image (id, uploader_id) {
+    tb_file (id, uploader_id) {
         id -> Int4,
         uploader_id -> Int8,
-        domain -> Nullable<Text>,
-        path -> Text,
+        title -> Nullable<Text>,
+        filepath -> Text,
         use_yn -> Bool,
         reg_utc -> Int8,
-        Field -> Nullable<Varchar>,
+    }
+}
+
+table! {
+    tb_file_history (id, writer_id, file_id) {
+        id -> Int8,
+        writer_id -> Int8,
+        file_id -> Int8,
+        filepath -> Text,
+        increase -> Int8,
+        reg_utc -> Int8,
     }
 }
 
@@ -76,6 +87,17 @@ table! {
 }
 
 table! {
+    tb_user_report (id, send_user_id) {
+        id -> Int8,
+        send_user_id -> Int8,
+        receive_user_id -> Int8,
+        reason -> Text,
+        use_yn -> Bool,
+        reg_utc -> Int8,
+    }
+}
+
+table! {
     test (id) {
         id -> Int8,
         text -> Nullable<Text>,
@@ -87,8 +109,10 @@ allow_tables_to_appear_in_same_query!(
     tb_debate_comment,
     tb_document,
     tb_document_history,
-    tb_image,
+    tb_file,
+    tb_file_history,
     tb_refresh_token,
     tb_user,
+    tb_user_report,
     test,
 );

@@ -36,19 +36,19 @@ COMMENT ON COLUMN "tb_document_history"."writer_id" IS '작성자 식별자';
 CREATE TABLE "tb_document" (
 	"id"	serial8		NOT NULL,
 	"title"	text		NOT NULL,
+	"recent_history_id"	int8		NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
 );
 
 COMMENT ON COLUMN "tb_document"."title" IS '문서 제목';
 
-CREATE TABLE "tb_image" (
+CREATE TABLE "tb_file" (
 	"id"	serial		NOT NULL,
 	"uploader_id"	int8		NOT NULL,
-	"domain"	text		NULL,
-	"path"	text		NOT NULL,
+	"title"	text		NULL,
+	"filepath"	text		NOT NULL,
 	"use_yn"	bool	DEFAULT true	NOT NULL,
-	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
-	"Field"	VARCHAR(255)		NULL
+	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
 );
 
 CREATE TABLE "tb_refresh_token" (
@@ -86,6 +86,32 @@ CREATE TABLE "tb_debate_comment" (
 	"open_yn"	bool	DEFAULT true	NOT NULL
 );
 
+CREATE TABLE "tb_user_report" (
+	"id"	serial8		NOT NULL,
+	"send_user_id"	int8		NOT NULL,
+	"receive_user_id"	int8		NOT NULL,
+	"reason"	text		NOT NULL,
+	"use_yn"	bool	DEFAULT true	NOT NULL,
+	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
+);
+
+COMMENT ON COLUMN "tb_user_report"."reason" IS '이메일.  unique';
+
+COMMENT ON COLUMN "tb_user_report"."use_yn" IS '사용여부';
+
+COMMENT ON COLUMN "tb_user_report"."reg_utc" IS '등록시간';
+
+CREATE TABLE "tb_file_history" (
+	"id"	serial8		NOT NULL,
+	"writer_id"	int8		NOT NULL,
+	"file_id"	int8		NOT NULL,
+	"filepath"	text		NOT NULL,
+	"increase"	int8		NOT NULL,
+	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
+);
+
+COMMENT ON COLUMN "tb_file_history"."writer_id" IS '작성자 식별자';
+
 ALTER TABLE "tb_user" ADD CONSTRAINT "PK_TB_USER" PRIMARY KEY (
 	"id"
 );
@@ -100,7 +126,7 @@ ALTER TABLE "tb_document" ADD CONSTRAINT "PK_TB_DOCUMENT" PRIMARY KEY (
 	"id"
 );
 
-ALTER TABLE "tb_image" ADD CONSTRAINT "PK_TB_IMAGE" PRIMARY KEY (
+ALTER TABLE "tb_file" ADD CONSTRAINT "PK_TB_FILE" PRIMARY KEY (
 	"id",
 	"uploader_id"
 );
@@ -122,6 +148,16 @@ ALTER TABLE "tb_debate_comment" ADD CONSTRAINT "PK_TB_DEBATE_COMMENT" PRIMARY KE
 	"writer_id"
 );
 
+ALTER TABLE "tb_user_report" ADD CONSTRAINT "PK_TB_USER_REPORT" PRIMARY KEY (
+	"id",
+	"send_user_id"
+);
 
--- 추가
+ALTER TABLE "tb_file_history" ADD CONSTRAINT "PK_TB_FILE_HISTORY" PRIMARY KEY (
+	"id",
+	"writer_id",
+	"file_id"
+);
+
+-- 인덱스 등 추가
 CREATE unique index "tb_document_title_unique" on "tb_document"("title");

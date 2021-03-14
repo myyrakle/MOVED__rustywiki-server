@@ -94,9 +94,10 @@ impl FileUploadParam {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct FileUploadResponse {
     pub success: bool,
+    pub file_write_failed: bool,
+    pub file_too_big: bool,
     pub image_id: i64,
     pub image_url: String,
-    pub image_too_big: bool,
 }
 
 #[post("/file")]
@@ -138,15 +139,37 @@ pub async fn upload_file(
     let file_path = body.file.path.clone();
     let file_data = body.file.data.clone();
 
-    // File::create is blocking operation, use threadpool
-    let mut f = web::block(move || std::fs::File::create(&file_path)).await.unwrap();
-    web::block(move || f.write_all(&file_data).map(|_| f)).await.unwrap();
+    // 스레드풀을 사용한 파일 쓰기
+    let file_write = async {
+        let mut f = match web::block(move || std::fs::File::create(&file_path)).await { 
+            Ok(f) => f, 
+            Err(_) => {
+                return None;
+            }
+        };
+        match web::block(move || f.write_all(&file_data).map(|_| f)).await {
+            Ok(_) => Some(()), 
+            Err(_) =>  None,
+        }
+    }.await;
+    
+    if file_write.is_none() {
+        let response = FileUploadResponse {
+            success: false,
+            file_write_failed: true,
+            file_too_big: false,
+            image_id: 0,
+            image_url: "".to_owned(),
+        };
+        return HttpResponse::build(StatusCode::OK).json(response);
+    }
 
     let response = FileUploadResponse {
         success: true,
+        file_write_failed: false,
         image_id: 0,
         image_url: "".to_owned(),
-        image_too_big: false,
+        file_too_big: false,
     };
     HttpResponse::build(StatusCode::OK).json(response)
 }
