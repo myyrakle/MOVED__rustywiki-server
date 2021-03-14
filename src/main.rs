@@ -78,7 +78,7 @@ async fn main() -> std::io::Result<()> {
             .service(routes::auth::logout)
             .service(routes::auth::refresh)
             .service(foo)
-            .service(routes::image::image_upload)
+            .service(routes::file::upload_file)
             .service(routes::user::my_info)
             .service(routes::user::close_my_account)
             .service(test)

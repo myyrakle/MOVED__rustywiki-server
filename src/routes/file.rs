@@ -28,7 +28,7 @@ pub struct ImageUploadResponse {
 }
 
 #[post("/image")]
-pub async fn image_upload(
+pub async fn upload_file(
     mut payload: Multipart,
     request: HttpRequest,
     connection: Data<Mutex<PgConnection>>,

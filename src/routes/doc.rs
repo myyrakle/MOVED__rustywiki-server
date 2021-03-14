@@ -24,7 +24,6 @@ pub struct WriteDocParam {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct WriteDocResponse {
     pub success: bool,
-    pub email_duplicated: bool,
     pub message: String,
 }
 
