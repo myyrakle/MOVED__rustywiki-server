@@ -15,7 +15,9 @@
 
             const imageFile = document.getElementById("image");
             const formData = new FormData();
-            formData.append("image", imageFile.files[0]);
+            formData.append("file", imageFile.files[0]);
+            formData.append("title", "제목");
+            formData.append("source", "출처");
             console.log("이건")
 
             const response = await axios.post(

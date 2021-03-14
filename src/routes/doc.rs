@@ -4,7 +4,7 @@ use std::sync::Mutex;
 
 // thirdparty
 use actix_web::{
-    get, http::StatusCode, post, put, web, web::Data, HttpRequest, HttpResponse, Responder,
+    get, http::StatusCode, post, web, web::Data, HttpRequest, HttpResponse, Responder,
 };
 use diesel::*;
 use serde::{Deserialize, Serialize};

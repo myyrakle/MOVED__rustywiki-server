@@ -16,6 +16,22 @@ impl ServerErrorResponse {
     }
 }
 
+// status 400
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct BadParameter {
+    pub success: bool, 
+    pub message: String,
+}
+
+impl BadParameter {
+    pub fn new() -> BadParameter {
+        BadParameter {
+            success: false, 
+            message: "bad parameter".into(),
+        }
+    }
+}
+
 // status 401
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct UnauthorizedResponse {

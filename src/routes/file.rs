@@ -5,7 +5,7 @@ use std::sync::Mutex;
 
 // thirdparty
 use actix_multipart::Multipart;
-use actix_web::{http::StatusCode, post, web, web::Data, HttpRequest, HttpResponse, Responder};
+use actix_web::{http::StatusCode, post, web, web::{Data}, HttpRequest, HttpResponse, Responder};
 use diesel::*;
 use futures::{StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
@@ -16,20 +16,92 @@ use uuid::Uuid;
 use crate::lib;
 //use crate::models::InsertUser;
 //use crate::schema::tb_user;
-use crate::response::{ServerErrorResponse, UnauthorizedResponse};
+use crate::response::{ServerErrorResponse, UnauthorizedResponse, BadParameter};
 use lib::AuthValue;
 
+#[derive(Deserialize, Serialize, Debug)]
+pub struct FileInfo {
+    pub path: String,
+    pub data: Vec<u8>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct FileUploadParam {
+    pub title: String,
+    pub source: String,
+    pub file: FileInfo,
+}
+
+impl FileUploadParam {
+    pub async fn from(mut payload: Multipart) -> Option<FileUploadParam> {
+        let mut title: Option<String> = None;
+        let mut source: Option<String> = None;
+        let mut file_data: Option<Vec<u8>> = None;
+        let mut file_path: Option<String> = None;
+
+        while let Ok(Some(mut field)) = payload.try_next().await {
+            println!("{:?}", field);
+    
+            let e = field.content_disposition()?;
+            let name = e.get_name()?;
+
+            let mut bytes:Vec<web::Bytes> = Vec::new();
+
+            while let Some(chunk) = field.next().await {
+                bytes.push(chunk.unwrap());
+            }
+
+            let bytes: Vec<u8> = bytes.iter().map(|e| e.to_vec()).flatten().collect();
+
+            match name {
+                "title" => {
+                    title = Some(String::from_utf8(bytes).ok()?);
+                    println!("타이틀: {:?}", title);
+                },
+                "source" => {
+                    source = Some(String::from_utf8(bytes).ok()?);
+                    println!("출처: {:?}", source);
+                },
+                "file" => {
+                    let file_format = e
+                        .get_filename()
+                        .expect("foo")
+                        .split(".")
+                        .last()
+                        .unwrap_or("jpg");
+                    let filename = Uuid::new_v4().to_string();
+
+                    file_path = Some(format!("./static/image/{}.{}", filename, file_format));
+                    file_data = Some(bytes);
+
+                    println!("파일path: {:?}", file_path);
+                },
+                _ => {}
+            }
+        }
+
+        Some(FileUploadParam {
+            title: title?, 
+            file: FileInfo {
+                path: file_path?, 
+                data: file_data?,
+            },
+            source: source?,
+        })
+    }
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct ImageUploadResponse {
+pub struct FileUploadResponse {
     pub success: bool,
     pub image_id: i64,
     pub image_url: String,
     pub image_too_big: bool,
 }
 
-#[post("/image")]
+#[post("/file")]
 pub async fn upload_file(
-    mut payload: Multipart,
+    payload: Multipart,
     request: HttpRequest,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
@@ -57,35 +129,20 @@ pub async fn upload_file(
         return HttpResponse::build(StatusCode::UNAUTHORIZED).json(response);
     }
 
-    while let Ok(Some(mut field)) = payload.try_next().await {
-        let content_type = field.content_disposition().expect("1");
-
-        let file_format = content_type
-            .get_filename()
-            .expect("foo")
-            .split(".")
-            .last()
-            .unwrap_or("jpg");
-
-        let filename = Uuid::new_v4().to_string();
-        let filepath = format!("./static/image/{}.{}", filename, file_format);
-
-        // File::create is blocking operation, use threadpool
-        let mut f = web::block(|| std::fs::File::create(filepath))
-            .await
-            .expect("3");
-
-        // Field in turn is stream of *Bytes* object
-        while let Some(chunk) = field.next().await {
-            let data = chunk.unwrap();
-            // filesystem operations are blocking, we have to use threadpool
-            f = web::block(move || f.write_all(&data).map(|_| f))
-                .await
-                .expect("4");
-        }
+    let body = FileUploadParam::from(payload).await;
+    if body.is_none() {
+        let response = BadParameter::new();
+        return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
     }
+    let body = body.unwrap();
+    let file_path = body.file.path.clone();
+    let file_data = body.file.data.clone();
 
-    let response = ImageUploadResponse {
+    // File::create is blocking operation, use threadpool
+    let mut f = web::block(move || std::fs::File::create(&file_path)).await.unwrap();
+    web::block(move || f.write_all(&file_data).map(|_| f)).await.unwrap();
+
+    let response = FileUploadResponse {
         success: true,
         image_id: 0,
         image_url: "".to_owned(),

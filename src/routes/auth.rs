@@ -45,7 +45,7 @@ pub async fn signup(
     };
     let connection: &PgConnection = Borrow::borrow(&connection);
 
-    // email duplicated check
+    // 이메일 중복 체크
     let already_exists = select(exists(
         tb_user::dsl::tb_user.filter(tb_user::dsl::email.eq(body.email.clone())),
     ))
@@ -228,6 +228,7 @@ pub async fn logout(
         .filter(tb_refresh_token::dsl::token_value.eq(&body.refresh_token))
         .filter(tb_refresh_token::dsl::dead_yn.eq(false));
 
+    // 리프레시 토큰 삭제처리
     let result = connection.transaction(|| {
         diesel::update(token)
             .set(tb_refresh_token::dsl::dead_yn.eq_all(true))

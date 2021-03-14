@@ -70,6 +70,7 @@ async fn main() -> std::io::Result<()> {
                     .allowed_origin("http://localhost:11111")
                     .allowed_origin("http://127.0.0.1:11111")
                     .allowed_origin("http://125.133.80.144:11111")
+                    .allowed_origin("http://192.168.1.2:11111")
                     .supports_credentials(),
             )
             .wrap(middleware::Logger::new())
