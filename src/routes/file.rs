@@ -11,6 +11,7 @@ use futures::{StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
 //use diesel::dsl::{select, exists};
 use uuid::Uuid;
+use diesel::result::Error;
 
 // in crate
 use crate::lib;
@@ -18,6 +19,7 @@ use crate::lib;
 //use crate::schema::tb_user;
 use crate::response::{ServerErrorResponse, UnauthorizedResponse, BadParameter};
 use lib::AuthValue;
+use crate::models::{InsertFile, SelectFile, InsertFileHistory, SelectFileHistory};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct FileInfo {
@@ -96,8 +98,7 @@ pub struct FileUploadResponse {
     pub success: bool,
     pub file_write_failed: bool,
     pub file_too_big: bool,
-    pub image_id: i64,
-    pub image_url: String,
+    pub title_duplicate: bool,
 }
 
 #[post("/file")]
@@ -158,18 +159,33 @@ pub async fn upload_file(
             success: false,
             file_write_failed: true,
             file_too_big: false,
-            image_id: 0,
-            image_url: "".to_owned(),
+            title_duplicate: false,
         };
         return HttpResponse::build(StatusCode::OK).json(response);
     }
 
+    let file = InsertFile {
+        uploader_id: auth.user_id,
+        title: body.title,
+        filepath: body.file.path,
+    };
+
+    
+
+    // connection.transaction::<_, Error, _>(||{
+    //     let file_history = InsertFileHistory {
+    //         writer_id: auth.user_id,
+    //         title: body.title,
+    //         filepath: body.file.path,
+    //     };
+
+    // });
+
     let response = FileUploadResponse {
         success: true,
         file_write_failed: false,
-        image_id: 0,
-        image_url: "".to_owned(),
         file_too_big: false,
+        title_duplicate: false,
     };
     HttpResponse::build(StatusCode::OK).json(response)
 }
