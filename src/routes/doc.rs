@@ -11,9 +11,9 @@ use serde::{Deserialize, Serialize};
 
 // in crate
 use crate::lib::AuthValue;
-//use crate::models::SelectUser;
+use crate::models::{SelectDocument};
 use crate::response::{ServerErrorResponse, UnauthorizedResponse};
-//use crate::schema::tb_user;
+use crate::schema::{tb_document, tb_document_history};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct WriteDocParam {
@@ -29,7 +29,7 @@ pub struct WriteDocResponse {
 
 #[post("/doc/document")]
 pub async fn write_doc(
-    web::Json(_body): web::Json<WriteDocParam>,
+    web::Json(body): web::Json<WriteDocParam>,
     request: HttpRequest,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
@@ -50,6 +50,12 @@ pub async fn write_doc(
         let response = UnauthorizedResponse::new();
         return HttpResponse::build(StatusCode::UNAUTHORIZED).json(response);
     }
+
+    
+    let exists_document_query = tb_document::dsl::tb_document
+            .filter(tb_document::dsl::title.eq(&body.title))
+            .get_result::<SelectDocument>(connection);
+   
 
     let response = UnauthorizedResponse::new();
     return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);

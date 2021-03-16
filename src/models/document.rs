@@ -1,5 +1,4 @@
-use crate::lib;
-use crate::schema::tb_user;
+use crate::schema::tb_document;
 
 #[derive(Insertable, Debug)]
 #[table_name = "tb_document"]

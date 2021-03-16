@@ -31,7 +31,7 @@ table! {
 }
 
 table! {
-    tb_document_history (id, writer_id, document_id) {
+    tb_document_history (id) {
         id -> Int8,
         writer_id -> Int8,
         document_id -> Int8,
