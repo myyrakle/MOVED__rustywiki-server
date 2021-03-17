@@ -36,7 +36,6 @@ COMMENT ON COLUMN "tb_document_history"."writer_id" IS '작성자 식별자';
 CREATE TABLE "tb_document" (
 	"id"	serial8		NOT NULL,
 	"title"	text		NOT NULL,
-	"recent_history_id"	int8		NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
 );
 

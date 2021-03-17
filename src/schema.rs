@@ -25,13 +25,12 @@ table! {
     tb_document (id) {
         id -> Int8,
         title -> Text,
-        recent_history_id -> Nullable<Int8>,
         reg_utc -> Int8,
     }
 }
 
 table! {
-    tb_document_history (id) {
+    tb_document_history (id, writer_id, document_id) {
         id -> Int8,
         writer_id -> Int8,
         document_id -> Int8,
