@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 // in crate
 use crate::lib::AuthValue;
-use crate::models::{SelectDocument};
+use crate::models::{SelectDocument, InsertDocument, InsertDocumentHistory, SelectDocumentHistory};
 use crate::response::{ServerErrorResponse, UnauthorizedResponse};
 use crate::schema::{tb_document, tb_document_history};
 
@@ -63,12 +63,18 @@ pub async fn write_doc(
             let response = if exists_document {
                 // 문서 히스토리만 추가
 
+                let execute_result = diesel::insert_into(tb_document::table)
+                    .values(insert_value)
+                    .execute(connection);
+
                 WriteDocResponse {
                     success:true, 
                     is_new_doc: false,
                     message: "문서 작성 성공".into()
                 }
             } else {
+                
+
                 // 문서 최초 생성
                 WriteDocResponse {
                     success:true, 

@@ -36,10 +36,14 @@ COMMENT ON COLUMN "tb_document_history"."writer_id" IS '작성자 식별자';
 CREATE TABLE "tb_document" (
 	"id"	serial8		NOT NULL,
 	"title"	text		NOT NULL,
-	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
+	"recent_history_id"	int8		NULL,
+	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
+	"update_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
 );
 
 COMMENT ON COLUMN "tb_document"."title" IS '문서 제목';
+
+COMMENT ON COLUMN "tb_document"."update_utc" IS '최종 수정시간';
 
 CREATE TABLE "tb_file" (
 	"id"	serial		NOT NULL,

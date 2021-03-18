@@ -25,7 +25,9 @@ table! {
     tb_document (id) {
         id -> Int8,
         title -> Text,
+        recent_history_id -> Nullable<Int8>,
         reg_utc -> Int8,
+        update_utc -> Int8,
     }
 }
 
