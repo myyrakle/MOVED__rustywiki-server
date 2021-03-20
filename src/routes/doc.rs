@@ -1,6 +1,7 @@
 // standard
 use std::borrow::Borrow;
 use std::sync::Mutex;
+use std::fs;
 
 // thirdparty
 use actix_web::{
@@ -9,9 +10,10 @@ use actix_web::{
 use diesel::*;
 use diesel::dsl::{exists, select};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 // in crate
-use crate::lib::AuthValue;
+use crate::lib::{AuthValue, DOCUMENT_ROOT_PATH};
 use crate::models::{SelectDocument, InsertDocument, InsertDocumentHistory, SelectDocumentHistory};
 use crate::response::{ServerErrorResponse, UnauthorizedResponse};
 use crate::schema::{tb_document, tb_document_history};
@@ -58,32 +60,89 @@ pub async fn write_doc(
         .filter(tb_document::dsl::title.eq(&body.title))))    
         .get_result(connection);
 
+    // 문서 개수
+    let content_length = body.content.chars().count();
+
+    // 문서 텍스트 파일 생성
+    let filename = Uuid::new_v4().to_string();
+    let filepath = format!("{}/{}.txt", DOCUMENT_ROOT_PATH, filename);
+
+    if fs::write(filepath, &body.content).is_err() {
+        let response = ServerErrorResponse::new();
+        return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+    }
+
+    // 문서가 존재 여부로 분기 처리
     match exists_document_result {
         Ok(exists_document) => {
-            let response = if exists_document {
-                // 문서 히스토리만 추가
+            if exists_document {
+                // 문서 최근 수정일 변경 및
+                // 문서 히스토리 추가
 
-                let execute_result = diesel::insert_into(tb_document::table)
-                    .values(insert_value)
-                    .execute(connection);
+                let result = connection.transaction(||{
+                    let document_id: i64 = diesel::update(tb_document::dsl::tb_document)
+                        .filter(tb_document::dsl::title.eq(&body.title))
+                        .set(tb_document::dsl::update_utc.eq(1))
+                        .returning(tb_document::dsl::id)
+                        .get_result(connection)?;
 
-                WriteDocResponse {
+                    let document_history = InsertDocumentHistory {
+                        writer_id: auth.user_id, 
+                        document_id: document_id, 
+                        filepath: "".into(), 
+                        increase: content_length as i64, 
+                    };
+
+                    diesel::insert_into(tb_document_history::table)
+                        .values(document_history)
+                        .execute(connection)
+                });
+
+                let response = WriteDocResponse {
                     success:true, 
                     is_new_doc: false,
                     message: "문서 작성 성공".into()
-                }
+                };
+                HttpResponse::build(StatusCode::OK).json(response)
             } else {
-                
-
                 // 문서 최초 생성
-                WriteDocResponse {
-                    success:true, 
-                    is_new_doc: true,
-                    message: "문서 최초 작성 성공".into()
-                }
-            };
+                let document = InsertDocument{
+                    title: body.title.clone()
+                };
 
-            HttpResponse::build(StatusCode::OK).json(response)
+                let result = connection.transaction(||{
+                    let document_id: i64 = diesel::insert_into(tb_document::table)
+                        .values(document)
+                        .returning(tb_document::dsl::id)
+                        .get_result(connection)?;
+
+                    let document_history = InsertDocumentHistory {
+                        writer_id: auth.user_id, 
+                        document_id: document_id, 
+                        filepath: filepath, 
+                        increase: content_length as i64, 
+                    };
+
+                    diesel::insert_into(tb_document_history::table)
+                        .values(document_history)
+                        .execute(connection)
+                });
+
+                match result { 
+                    Ok(_) => {
+                        let response = WriteDocResponse {
+                            success: true, 
+                            is_new_doc: true,
+                            message: "문서 작성 성공".into()
+                        };
+                        HttpResponse::build(StatusCode::OK).json(response)
+                    }, 
+                    Err(_) => {
+                        let response = ServerErrorResponse::new();
+                        HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
+                    }
+                }
+            }
         }, 
         Err(_)=> {
             let response = ServerErrorResponse::new();

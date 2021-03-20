@@ -1,0 +1,1 @@
+pub const DOCUMENT_ROOT_PATH:&'static str = "/doc";
