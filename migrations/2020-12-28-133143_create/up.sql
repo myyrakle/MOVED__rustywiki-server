@@ -26,7 +26,8 @@ CREATE TABLE "tb_document_history" (
 	"id"	serial8		NOT NULL,
 	"writer_id"	int8		NOT NULL,
 	"document_id"	int8		NOT NULL,
-	"filepath"	text		NOT NULL,
+	"content"	text		NOT NULL,
+	"char_count"	int8		NOT NULL,
 	"increase"	int8		NOT NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
 );
@@ -36,7 +37,7 @@ COMMENT ON COLUMN "tb_document_history"."writer_id" IS '작성자 식별자';
 CREATE TABLE "tb_document" (
 	"id"	serial8		NOT NULL,
 	"title"	text		NOT NULL,
-	"recent_history_id"	int8		NULL,
+	"recent_history_id"	int8		NOT NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
 	"update_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
 );
@@ -161,6 +162,7 @@ ALTER TABLE "tb_file_history" ADD CONSTRAINT "PK_TB_FILE_HISTORY" PRIMARY KEY (
 	"writer_id",
 	"file_id"
 );
+
 
 -- 인덱스 등 추가
 CREATE unique index "tb_document_title_unique" on "tb_document"("title");

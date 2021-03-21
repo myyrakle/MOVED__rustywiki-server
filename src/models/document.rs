@@ -10,6 +10,7 @@ pub struct InsertDocument {
 pub struct SelectDocument {
     pub id: i64,
     pub title: String,
+    pub recent_history_id: i64,
     pub update_utc: i64,
     pub reg_utc: i64,
 }

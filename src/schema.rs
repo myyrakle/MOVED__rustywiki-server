@@ -25,7 +25,7 @@ table! {
     tb_document (id) {
         id -> Int8,
         title -> Text,
-        recent_history_id -> Nullable<Int8>,
+        recent_history_id -> Int8,
         reg_utc -> Int8,
         update_utc -> Int8,
     }
@@ -36,7 +36,8 @@ table! {
         id -> Int8,
         writer_id -> Int8,
         document_id -> Int8,
-        filepath -> Text,
+        content -> Text,
+        char_count -> Int8,
         increase -> Int8,
         reg_utc -> Int8,
     }

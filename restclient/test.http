@@ -68,7 +68,9 @@ Content-Type: application/json
 }
 ###
 
-@token = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJ1c2VyX3R5cGUiOiJhc2RmIiwiZXhwIjo0NzYzMDEzNjk0fQ.--PMVH0Bupk5-IaMe2FJPJ6yX54hau2EoMB5ArmTvC4
+{"success":true,"login_failed":false,"access_token":"","refresh_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJ1c2VyX3R5cGUiOiJVU0VSIiwiZXhwIjoxNjQ3NzczNDU3fQ.fPv_fTYnoRXcGolGcFV67ktUF1xOjKm6ZwTUUuF64LU","message":"success"}
+
+@token = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJ1c2VyX3R5cGUiOiJVU0VSIiwiZXhwIjoxNjE2MjQxMDU3fQ.hkvzluxH5osaY-8NSIqtf1yOsimSVsuQTMErbK71foE
 
 ###
 GET http://{{host}}
@@ -76,5 +78,16 @@ Content-Type: application/json
 Authorization: {{token}}
 
 {
+}
+###
+
+###
+POST http://{{host}}/doc/document
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+    "title": "테스트", 
+    "content": "내용2"
 }
 ###
