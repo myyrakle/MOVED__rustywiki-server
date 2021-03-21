@@ -1,8 +1,5 @@
 @host = 192.168.1.2:11111
 
-@access_token = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoyLCJ1c2VyX3R5cGUiOiLquYDrtojri60iLCJleHAiOjE2MTQ4NzA0NjJ9.R5tzRCmx1taGfv-oE-fEFS53pCfyvaZRyd7ufJD2nPw
-@refresh_token = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoyLCJ1c2VyX3R5cGUiOiLquYDrtojri60iLCJleHAiOjE2NDY0MDIzNjN9.adeeA0eg2UwSag2WUR1vPUk1k1hcD45n38QI2OUI2ug
-
 ### 액세스 토큰 갱신
 PUT http://{{host}}/auth/refresh
 Content-Type: application/json
@@ -68,9 +65,9 @@ Content-Type: application/json
 }
 ###
 
-{"success":true,"login_failed":false,"access_token":"","refresh_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJ1c2VyX3R5cGUiOiJVU0VSIiwiZXhwIjoxNjQ3NzczNDU3fQ.fPv_fTYnoRXcGolGcFV67ktUF1xOjKm6ZwTUUuF64LU","message":"success"}
+{"success":true,"login_failed":false,"access_token":"","refresh_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJ1c2VyX3R5cGUiOiJVU0VSIiwiZXhwIjoxNjQ3ODI1MjIyfQ.6CDyhNk0bKfvBi-EMZCjqPsT-wqo2ZRFwHqNsHeQdsw","message":"success"}
 
-@token = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJ1c2VyX3R5cGUiOiJVU0VSIiwiZXhwIjoxNjE2MjQxMDU3fQ.hkvzluxH5osaY-8NSIqtf1yOsimSVsuQTMErbK71foE
+@token = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJ1c2VyX3R5cGUiOiJVU0VSIiwiZXhwIjoxNjE2MjkyODIyfQ.es1fc15zxtMSVOk3gCo3F39RSVPF99DJaXv-Aa_JqN0
 
 ###
 GET http://{{host}}
@@ -89,5 +86,15 @@ Authorization: {{token}}
 {
     "title": "테스트", 
     "content": "내용2"
+}
+###
+
+###
+GET http://{{host}}/doc/docume33nt?title=테스트
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+    "title": "테스트"
 }
 ###

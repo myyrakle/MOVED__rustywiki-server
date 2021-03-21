@@ -144,13 +144,15 @@ pub async fn write_doc(
                     };
                     HttpResponse::build(StatusCode::OK).json(response)
                 }
-                Err(_) => {
+                Err(error) => {
+                    log::error!("error: {}", error);
                     let response = ServerErrorResponse::new();
                     HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
                 }
             }
         }
-        Err(_) => {
+        Err(error) => {
+            log::error!("error: {}", error);
             let response = ServerErrorResponse::new();
             HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
         }
@@ -174,8 +176,7 @@ pub struct ReadDocResponse {
 
 #[get("/doc/document")]
 pub async fn read_doc(
-    web::Json(query): web::Json<WriteDocParam>,
-    request: HttpRequest,
+    web::Json(query): web::Json<ReadDocParam>,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
     let connection = match connection.lock() {
@@ -194,7 +195,7 @@ pub async fn read_doc(
             .get_result(connection)?;
 
         tb_document_history::dsl::tb_document_history
-            .filter(tb_document_history::dsl::id.eq(document.recent_history_id))
+            .filter(tb_document_history::dsl::id.eq(document.recent_history_id.unwrap_or(-1)))
             .get_result(connection)
     })();
 
