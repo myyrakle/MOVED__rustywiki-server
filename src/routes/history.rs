@@ -16,20 +16,21 @@ use crate::response::{ServerErrorResponse, UnauthorizedResponse};
 //use crate::schema::tb_user;
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct CreateDocParam {
+pub struct ReadHistoryParam {
     pub title: String,
-    pub content: String,
+    pub page: i64,
+    pub limit: i64,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct CreateDocResponse {
+pub struct ReadHistoryResponse {
     pub success: bool,
     pub email_duplicated: bool,
     pub message: String,
 }
 
-#[post("/doc/document")]
-pub async fn create_doc(
+#[get("/doc/history")]
+pub async fn read_document_history_list(
     request: HttpRequest,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
@@ -55,12 +56,7 @@ pub async fn create_doc(
     return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
 }
 
-#[get("/doc/document")]
-pub async fn read_doc(_req: HttpRequest) -> impl Responder {
-    "unimplemented"
-}
-
-#[put("/doc/document")]
-pub async fn update_doc(_req: HttpRequest) -> impl Responder {
+#[get("/doc/history/detail")]
+pub async fn read_document_history_detail(_req: HttpRequest) -> impl Responder {
     "unimplemented"
 }

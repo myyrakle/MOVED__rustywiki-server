@@ -37,6 +37,12 @@ use diesel::*;
 //use schema::tb_user;
 use std::borrow::Borrow;
 
+#[derive(Queryable, Debug)]
+pub struct SelectTest {
+    pub id: i64,
+    pub text: Option<String>,
+}
+
 #[get("/foo")]
 async fn foo(connection: Data<Mutex<PgConnection>>) -> impl Responder {
     let connection = match connection.lock() {
@@ -46,7 +52,22 @@ async fn foo(connection: Data<Mutex<PgConnection>>) -> impl Responder {
         }
         Ok(connection) => connection,
     };
-    let _connection: &PgConnection = Borrow::borrow(&connection);
+    let connection: &PgConnection = Borrow::borrow(&connection);
+
+    // use crate::schema::test;
+    // use diesel::dsl::count;
+
+    // // select sum(id) from test
+    // let query = test::dsl::test
+    //     .group_by(test::dsl::dead_yn)
+    //     .select((test::dsl::dead_yn, count(test::dsl::id)));
+    // println!(
+    //     "query {:?}",
+    //     diesel::debug_query::<diesel::pg::Pg, _>(&query)
+    // );
+
+    // let result = query.get_results::<(bool, i64)>(connection).unwrap();
+    // println!("값 {:?}", result);
 
     "".to_string()
 }

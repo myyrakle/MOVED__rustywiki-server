@@ -103,6 +103,7 @@ table! {
     test (id) {
         id -> Int8,
         text -> Nullable<Text>,
+        dead_yn -> Bool,
     }
 }
 

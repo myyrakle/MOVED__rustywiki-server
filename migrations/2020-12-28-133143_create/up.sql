@@ -165,4 +165,4 @@ ALTER TABLE "tb_file_history" ADD CONSTRAINT "PK_TB_FILE_HISTORY" PRIMARY KEY (
 
 
 -- 인덱스 등 추가
-CREATE unique index "tb_document_title_unique" on "tb_document"("title");
+CREATE unique index "tb_document_title_unique" on "tb_document"("title" gin_trgm_ops);
