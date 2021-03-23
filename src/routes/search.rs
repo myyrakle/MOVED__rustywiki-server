@@ -3,36 +3,29 @@ use std::borrow::Borrow;
 use std::sync::Mutex;
 
 // thirdparty
-use actix_web::{
-    get, http::StatusCode, post, web, web::Data, HttpRequest, HttpResponse, Responder,
-};
-use diesel::dsl::{exists, select};
+use actix_web::{get, http::StatusCode, web, web::Data, HttpResponse, Responder};
 use diesel::*;
 use serde::{Deserialize, Serialize};
 
 // in crate
-use crate::lib::AuthValue;
-use crate::models::{InsertDocument, InsertDocumentHistory, SelectDocument, SelectDocumentHistory};
-use crate::response::{ServerErrorResponse, UnauthorizedResponse};
-use crate::schema::{tb_document, tb_document_history};
+use crate::response::ServerErrorResponse;
+use crate::schema::tb_document;
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct WriteDocParam {
-    pub title: String,
-    pub content: String,
+pub struct SearchDocParam {
+    pub search_text: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct WriteDocResponse {
+pub struct SearchDocResponse {
     pub success: bool,
-    pub is_new_doc: bool,
+    pub search_list: Vec<String>,
     pub message: String,
 }
 
-#[post("/doc/search")]
-pub async fn search(
-    web::Json(body): web::Json<WriteDocParam>,
-    request: HttpRequest,
+#[get("/doc/search")]
+pub async fn search_doc(
+    web::Query(query): web::Query<SearchDocParam>,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
     let connection = match connection.lock() {
@@ -45,6 +38,24 @@ pub async fn search(
     };
     let connection: &PgConnection = Borrow::borrow(&connection);
 
-    let response = ServerErrorResponse::new();
-    return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json;
+    let search_list: Result<Vec<String>, _> = tb_document::dsl::tb_document
+        .filter(tb_document::dsl::title.like(query.search_text + "%"))
+        .order(tb_document::dsl::title.asc())
+        .select(tb_document::dsl::title)
+        .get_results(connection);
+
+    match search_list {
+        Ok(search_list) => {
+            let response = SearchDocResponse {
+                success: true,
+                search_list: search_list,
+                message: "성공".into(),
+            };
+            HttpResponse::build(StatusCode::OK).json(response)
+        }
+        Err(error) => {
+            let response = ServerErrorResponse::new();
+            HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
+        }
+    }
 }

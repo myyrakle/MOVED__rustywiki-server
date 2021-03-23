@@ -109,7 +109,8 @@ CREATE TABLE "tb_file_history" (
 	"id"	serial8		NOT NULL,
 	"writer_id"	int8		NOT NULL,
 	"file_id"	int8		NOT NULL,
-	"filepath"	text		NOT NULL,
+	"content"	text		NULL,
+	"char_count"	int8		NOT NULL,
 	"increase"	int8		NOT NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
 );
@@ -163,6 +164,6 @@ ALTER TABLE "tb_file_history" ADD CONSTRAINT "PK_TB_FILE_HISTORY" PRIMARY KEY (
 	"file_id"
 );
 
-
 -- 인덱스 등 추가
-CREATE unique index "tb_document_title_unique" on "tb_document"("title" gin_trgm_ops);
+CREATE index "tb_document_title_gin" on "tb_document" using gin("title" gin_trgm_ops);
+CREATE unique index "tb_document_title_unique" on "tb_document"("title");

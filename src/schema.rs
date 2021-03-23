@@ -45,7 +45,7 @@ table! {
 
 table! {
     tb_file (id, uploader_id) {
-        id -> Int4,
+        id -> Int8,
         uploader_id -> Int8,
         title -> Nullable<Text>,
         filepath -> Text,
@@ -59,7 +59,8 @@ table! {
         id -> Int8,
         writer_id -> Int8,
         file_id -> Int8,
-        filepath -> Text,
+        content -> Nullable<Text>,
+        char_count -> Int8,
         increase -> Int8,
         reg_utc -> Int8,
     }

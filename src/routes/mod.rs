@@ -1,6 +1,9 @@
 pub mod doc;
 pub use doc::*;
 
+pub mod search;
+pub use search::*;
+
 pub mod auth;
 pub use auth::*;
 
