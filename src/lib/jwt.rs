@@ -14,13 +14,22 @@ fn read_key() -> String {
 
     let file = File::open("env/key.txt");
 
-    if file.is_ok() {
-        let mut file = file.unwrap();
-        let mut buffer = String::new();
-        file.read_to_string(&mut buffer).unwrap();
-        buffer
-    } else {
-        "foobar".to_string()
+    match file {
+        Ok(mut file) => {
+            let mut buffer = String::new();
+
+            match file.read_to_string(&mut buffer) {
+                Ok(buffer) => buffer.to_string(),
+                Err(error) => {
+                    log::error!("file read error: {}", error);
+                    "foobar".to_string()
+                }
+            }
+        }
+        Err(error) => {
+            log::error!("file read error: {}", error);
+            "foobar".to_string()
+        }
     }
 }
 
@@ -34,10 +43,9 @@ pub fn verify(token: String) -> Option<i64> {
 
     let claims = jsonwebtoken::decode::<Claims>(token.as_str(), &decoding_key, &validation);
 
-    if claims.is_ok() {
-        Some(claims.unwrap().claims.user_id)
-    } else {
-        None
+    match claims {
+        Ok(claims) => Some(claims.claims.user_id),
+        Err(_) => None,
     }
 }
 
@@ -55,7 +63,8 @@ pub fn sign(exp: usize, user_id: i64, user_type: String) -> String {
 
     let header = Header::new(Algorithm::HS256);
 
-    jsonwebtoken::encode::<Claims>(&header, &data, &EncodingKey::from_secret(key)).unwrap()
+    jsonwebtoken::encode::<Claims>(&header, &data, &EncodingKey::from_secret(key))
+        .unwrap_or("".into())
 }
 
 use epoch_timestamp::Epoch;
