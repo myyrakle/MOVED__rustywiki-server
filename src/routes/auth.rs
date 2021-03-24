@@ -49,16 +49,24 @@ pub async fn signup(
     let already_exists = select(exists(
         tb_user::dsl::tb_user.filter(tb_user::dsl::email.eq(body.email.clone())),
     ))
-    .get_result(connection)
-    .unwrap();
+    .get_result(connection);
 
-    if already_exists {
-        let response = SignupResponse {
-            success: false,
-            email_duplicated: true,
-            message: "email already exists".to_owned(),
-        };
-        return HttpResponse::build(StatusCode::OK).json(response);
+    match already_exists {
+        Ok(already_exists) => {
+            if already_exists {
+                let response = SignupResponse {
+                    success: false,
+                    email_duplicated: true,
+                    message: "email already exists".to_owned(),
+                };
+                return HttpResponse::build(StatusCode::OK).json(response);
+            }
+        }
+        Err(error) => {
+            log::error!("error: {}", error);
+            let response = ServerErrorResponse::new();
+            return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+        }
     }
 
     // 회원가입 데이터 삽입
@@ -68,18 +76,21 @@ pub async fn signup(
         .values(insert_value)
         .execute(connection);
 
-    if execute_result.is_err() {
-        log::error!("signup insert query error");
-        let response = ServerErrorResponse::new();
-        return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+    match execute_result {
+        Ok(_) => {
+            let response = SignupResponse {
+                success: true,
+                email_duplicated: false,
+                message: "".to_owned(),
+            };
+            HttpResponse::build(StatusCode::OK).json(response)
+        }
+        Err(error) => {
+            log::error!("error: {}", error);
+            let response = ServerErrorResponse::new();
+            return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+        }
     }
-
-    let response = SignupResponse {
-        success: true,
-        email_duplicated: false,
-        message: "".to_owned(),
-    };
-    HttpResponse::build(StatusCode::OK).json(response)
 }
 
 #[derive(Deserialize, Serialize, Debug)]
