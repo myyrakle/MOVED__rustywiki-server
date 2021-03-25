@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -8,6 +9,9 @@ use actix_web::{
 };
 use futures::future::{ok, Ready};
 use futures::Future;
+
+use crate::models::SelectUser;
+use crate::schema::tb_user;
 
 pub struct Auth;
 
@@ -61,8 +65,7 @@ where
     }
 
     // call
-    fn call(&mut self, request: ServiceRequest) -> Self::Future 
-    {
+    fn call(&mut self, request: ServiceRequest) -> Self::Future {
         let (request, payload) = request.into_parts();
 
         let _path = request.path().to_string();
@@ -72,35 +75,46 @@ where
 
         let mut auth_value = AuthValue::new();
 
-        if token.is_some() {
-            // 인증 처리
-            // ...
-            let token = token.unwrap().to_str().unwrap().to_string();
-            println!("{}", token);
+        if let Some(token) = token {
+            if let Ok(token) = token.to_str() {
+                let token = token.to_string();
 
-            let decoded_result = jwt::verify(token);
+                println!("{}", token);
 
-            if decoded_result.is_some() {
-                use diesel::*;
-                //use std::borrow::Borrow;
-                use actix_web::web::Data;
-                use std::sync::Mutex;
+                let decoded_result = jwt::verify(token);
 
-                let _f: &Data<Mutex<PgConnection>> = request.app_data().unwrap();
+                if let Some(decoded_result) = decoded_result {
+                    use diesel::*;
+                    //use std::borrow::Borrow;
+                    use actix_web::web::Data;
+                    use std::sync::Mutex;
 
-                auth_value.set_values(true, 1, "f".into());
-                //Ok(decoded_result.unwrap().claims.data)
+                    //let connection: &Data<Mutex<PgConnection>> = request.app_data();
+
+                    if let Some(connection) = request.app_data::<Data<Mutex<PgConnection>>>() {
+                        if let Ok(connection) = connection.lock() {
+                            let connection: &PgConnection = Borrow::borrow(&connection);
+
+                            let user = tb_user::dsl::tb_user
+                                .filter(tb_user::dsl::id.eq(decoded_result))
+                                .get_result::<SelectUser>(connection);
+
+                            if let Ok(user) = user {
+                                auth_value.set_values(true, user.id, user.user_type);
+                            }
+                        }
+                    }
+                }
             }
         }
 
+        //println!("{:?}", auth_value);
         request.extensions_mut().insert(auth_value);
 
         //let extensions = request.extensions();
         //let auth: &AuthValue = extensions.get::<AuthValue>().unwrap();
 
         let service_request = ServiceRequest::from_parts(request, payload).ok().unwrap();
-
-        //let value = result.unwrap();
 
         let fut = self.service.call(service_request);
 
