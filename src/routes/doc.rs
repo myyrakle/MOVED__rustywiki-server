@@ -47,7 +47,8 @@ pub async fn write_doc(
 
     // 미인증 접근 거부
     let extensions = request.extensions();
-    let auth: &AuthValue = extensions.get::<AuthValue>().unwrap();
+    let nonauth = AuthValue::new();
+    let auth: &AuthValue = extensions.get::<AuthValue>().unwrap_or(&nonauth);
     if !auth.is_authorized() {
         let response = UnauthorizedResponse::new();
         return HttpResponse::build(StatusCode::UNAUTHORIZED).json(response);
