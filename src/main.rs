@@ -52,7 +52,7 @@ async fn foo(connection: Data<Mutex<PgConnection>>) -> impl Responder {
         }
         Ok(connection) => connection,
     };
-    let connection: &PgConnection = Borrow::borrow(&connection);
+    let _connection: &PgConnection = Borrow::borrow(&connection);
 
     // use crate::schema::test;
     // use diesel::dsl::count;

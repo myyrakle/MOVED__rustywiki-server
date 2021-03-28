@@ -80,9 +80,15 @@ pub async fn write_doc(
                     let latest_history: SelectDocumentHistory =
                         tb_document_history::dsl::tb_document_history
                             .filter(tb_document_history::dsl::document_id.eq(document_id))
+                            .filter(tb_document_history::dsl::latest_yn.eq(true))
                             .order(tb_document_history::dsl::reg_utc.desc())
                             .limit(1)
                             .get_result(connection)?;
+
+                    diesel::update(tb_document_history::dsl::tb_document_history)
+                        .filter(tb_document_history::dsl::document_id.eq(document_id))
+                        .set(tb_document_history::dsl::latest_yn.eq(false))
+                        .execute(connection)?;
 
                     let increase = content_length - latest_history.char_count;
 
@@ -197,6 +203,7 @@ pub async fn read_doc(
 
         tb_document_history::dsl::tb_document_history
             .filter(tb_document_history::dsl::id.eq(document.recent_history_id.unwrap_or(-1)))
+            .filter(tb_document_history::dsl::latest_yn.eq(true))
             .get_result(connection)
     })();
 

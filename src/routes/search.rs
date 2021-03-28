@@ -54,6 +54,7 @@ pub async fn search_doc(
             HttpResponse::build(StatusCode::OK).json(response)
         }
         Err(error) => {
+            log::error!("error: {}", error);
             let response = ServerErrorResponse::new();
             HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
         }
