@@ -40,6 +40,7 @@ table! {
         char_count -> Int8,
         increase -> Int8,
         reg_utc -> Int8,
+        latest_yn -> Bool,
     }
 }
 
@@ -63,6 +64,7 @@ table! {
         char_count -> Int8,
         increase -> Int8,
         reg_utc -> Int8,
+        latest_yn -> Bool,
     }
 }
 

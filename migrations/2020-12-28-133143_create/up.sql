@@ -29,7 +29,8 @@ CREATE TABLE "tb_document_history" (
 	"content"	text		NOT NULL,
 	"char_count"	int8		NOT NULL,
 	"increase"	int8		NOT NULL,
-	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
+	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
+	"latest_yn"	bool	DEFAULT true	NOT NULL
 );
 
 COMMENT ON COLUMN "tb_document_history"."writer_id" IS '작성자 식별자';
@@ -47,7 +48,7 @@ COMMENT ON COLUMN "tb_document"."title" IS '문서 제목';
 COMMENT ON COLUMN "tb_document"."update_utc" IS '최종 수정시간';
 
 CREATE TABLE "tb_file" (
-	"id"	serial		NOT NULL,
+	"id"	serial8		NOT NULL,
 	"uploader_id"	int8		NOT NULL,
 	"title"	text		NULL,
 	"filepath"	text		NOT NULL,
@@ -112,7 +113,8 @@ CREATE TABLE "tb_file_history" (
 	"content"	text		NULL,
 	"char_count"	int8		NOT NULL,
 	"increase"	int8		NOT NULL,
-	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
+	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
+	"latest_yn"	bool	DEFAULT false	NOT NULL
 );
 
 COMMENT ON COLUMN "tb_file_history"."writer_id" IS '작성자 식별자';

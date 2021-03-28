@@ -50,7 +50,9 @@ impl FileUploadParam {
             let mut bytes: Vec<web::Bytes> = Vec::new();
 
             while let Some(chunk) = field.next().await {
-                bytes.push(chunk.unwrap());
+                if let Ok(chunk) = chunk {
+                    bytes.push(chunk);
+                }
             }
 
             let bytes: Vec<u8> = bytes.iter().map(|e| e.to_vec()).flatten().collect();
