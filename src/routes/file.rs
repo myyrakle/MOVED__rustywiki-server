@@ -208,3 +208,114 @@ pub async fn upload_file(
         }
     }
 }
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct FileUpdateResponse {
+    pub success: bool,
+}
+
+#[post("/file")]
+pub async fn update_file(
+    payload: Multipart,
+    request: HttpRequest,
+    connection: Data<Mutex<PgConnection>>,
+) -> impl Responder {
+    let connection = match connection.lock() {
+        Err(_) => {
+            log::error!("database connection lock error");
+            let response = ServerErrorResponse::new();
+            return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+        }
+        Ok(connection) => connection,
+    };
+    let connection: &PgConnection = Borrow::borrow(&connection);
+
+    let extensions = request.extensions();
+    let auth: &AuthValue = match extensions.get::<AuthValue>() {
+        None => {
+            let response = ServerErrorResponse::new();
+            return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+        }
+        Some(auth) => auth,
+    };
+
+    if auth.is_authorized() {
+        let response = UnauthorizedResponse::new();
+        return HttpResponse::build(StatusCode::UNAUTHORIZED).json(response);
+    }
+
+    let body = FileUploadParam::from(payload).await;
+    if body.is_none() {
+        let response = BadParameter::new();
+        return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+    }
+    let body = body.unwrap();
+    let file_path = body.file.path.clone();
+    let file_data = body.file.data.clone();
+
+    // 스레드풀을 사용한 파일 쓰기
+    let file_write = async {
+        let mut f = match web::block(move || std::fs::File::create(&file_path)).await {
+            Ok(f) => f,
+            Err(_) => {
+                return None;
+            }
+        };
+        match web::block(move || f.write_all(&file_data).map(|_| f)).await {
+            Ok(_) => Some(()),
+            Err(_) => None,
+        }
+    }
+    .await;
+    if file_write.is_none() {
+        let response = FileUploadResponse {
+            success: false,
+            file_write_failed: true,
+            file_too_big: false,
+            title_duplicate: false,
+        };
+        return HttpResponse::build(StatusCode::OK).json(response);
+    }
+
+    let result = connection.transaction::<_, Error, _>(|| {
+        let insert_file = InsertFile {
+            uploader_id: auth.user_id,
+            title: body.title,
+            filepath: body.file.path,
+        };
+
+        let file_id: i64 = diesel::insert_into(tb_file::table)
+            .values(insert_file)
+            .returning(tb_file::dsl::id)
+            .get_result(connection)?;
+
+        let insert_file_history = InsertFileHistory {
+            file_id: file_id,
+            writer_id: auth.user_id,
+            content: body.content,
+            char_count: 0,
+            increase: 0,
+        };
+
+        diesel::insert_into(tb_file_history::table)
+            .values(insert_file_history)
+            .execute(connection)
+    });
+
+    match result {
+        Ok(_) => {
+            let response = FileUploadResponse {
+                success: true,
+                file_write_failed: false,
+                file_too_big: false,
+                title_duplicate: false,
+            };
+            HttpResponse::build(StatusCode::OK).json(response)
+        }
+        Err(error) => {
+            log::error!("error: {}", error);
+            let response = ServerErrorResponse::new();
+            HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
+        }
+    }
+}
