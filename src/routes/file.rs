@@ -5,7 +5,9 @@ use std::sync::Mutex;
 
 // thirdparty
 use actix_multipart::Multipart;
-use actix_web::{http::StatusCode, post, web, web::Data, HttpRequest, HttpResponse, Responder};
+use actix_web::{
+    http::StatusCode, post, put, web, web::Data, HttpRequest, HttpResponse, Responder,
+};
 use diesel::*;
 use futures::{StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
@@ -128,7 +130,11 @@ pub async fn upload_file(
         Some(auth) => auth,
     };
 
-    if auth.is_authorized() {
+    // 미인증 접근 거부
+    let extensions = request.extensions();
+    let nonauth = AuthValue::new();
+    let auth: &AuthValue = extensions.get::<AuthValue>().unwrap_or(&nonauth);
+    if !auth.is_authorized() {
         let response = UnauthorizedResponse::new();
         return HttpResponse::build(StatusCode::UNAUTHORIZED).json(response);
     }
@@ -209,14 +215,21 @@ pub async fn upload_file(
     }
 }
 
+#[derive(Deserialize, Serialize, Debug)]
+pub struct FileUpdateParam {
+    pub title: String,
+    pub content: Option<String>,
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct FileUpdateResponse {
     pub success: bool,
+    pub message: String,
 }
 
-#[post("/file")]
+#[put("/file")]
 pub async fn update_file(
-    payload: Multipart,
+    web::Json(body): web::Json<FileUpdateParam>,
     request: HttpRequest,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
@@ -230,71 +243,41 @@ pub async fn update_file(
     };
     let connection: &PgConnection = Borrow::borrow(&connection);
 
+    // 미인증 접근 거부
     let extensions = request.extensions();
-    let auth: &AuthValue = match extensions.get::<AuthValue>() {
-        None => {
-            let response = ServerErrorResponse::new();
-            return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
-        }
-        Some(auth) => auth,
-    };
-
-    if auth.is_authorized() {
+    let nonauth = AuthValue::new();
+    let auth: &AuthValue = extensions.get::<AuthValue>().unwrap_or(&nonauth);
+    if !auth.is_authorized() {
         let response = UnauthorizedResponse::new();
         return HttpResponse::build(StatusCode::UNAUTHORIZED).json(response);
     }
 
-    let body = FileUploadParam::from(payload).await;
-    if body.is_none() {
-        let response = BadParameter::new();
-        return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
-    }
-    let body = body.unwrap();
-    let file_path = body.file.path.clone();
-    let file_data = body.file.data.clone();
-
-    // 스레드풀을 사용한 파일 쓰기
-    let file_write = async {
-        let mut f = match web::block(move || std::fs::File::create(&file_path)).await {
-            Ok(f) => f,
-            Err(_) => {
-                return None;
-            }
-        };
-        match web::block(move || f.write_all(&file_data).map(|_| f)).await {
-            Ok(_) => Some(()),
-            Err(_) => None,
-        }
-    }
-    .await;
-    if file_write.is_none() {
-        let response = FileUploadResponse {
-            success: false,
-            file_write_failed: true,
-            file_too_big: false,
-            title_duplicate: false,
-        };
-        return HttpResponse::build(StatusCode::OK).json(response);
-    }
+    let content_length = body.content.chars().count() as i64;
 
     let result = connection.transaction::<_, Error, _>(|| {
-        let insert_file = InsertFile {
-            uploader_id: auth.user_id,
-            title: body.title,
-            filepath: body.file.path,
-        };
-
-        let file_id: i64 = diesel::insert_into(tb_file::table)
-            .values(insert_file)
-            .returning(tb_file::dsl::id)
+        let file_id: i64 = tb_file::dsl::tb_file
+            .filter(tb_file::dsl::title.eq(&body.title))
+            .select(tb_file::dsl::id)
             .get_result(connection)?;
+
+        let prev_count: i64 = tb_file_history::dsl::tb_file_history
+            .filter(tb_file_history::dsl::file_id.eq(file_id))
+            .filter(tb_file_history::dsl::latest_yn.eq(true))
+            .select(tb_file_history::dsl::char_count)
+            .get_result(connection)?;
+
+        diesel::update(tb_file_history::dsl::tb_file_history)
+            .filter(tb_file_history::dsl::file_id.eq(file_id))
+            .filter(tb_file_history::dsl::latest_yn.eq(true))
+            .set(tb_file_history::dsl::latest_yn.eq(false))
+            .execute(connection)?;
 
         let insert_file_history = InsertFileHistory {
             file_id: file_id,
             writer_id: auth.user_id,
             content: body.content,
-            char_count: 0,
-            increase: 0,
+            char_count: content_length,
+            increase: content_length - prev_count,
         };
 
         diesel::insert_into(tb_file_history::table)
@@ -304,11 +287,9 @@ pub async fn update_file(
 
     match result {
         Ok(_) => {
-            let response = FileUploadResponse {
+            let response = FileUpdateResponse {
                 success: true,
-                file_write_failed: false,
-                file_too_big: false,
-                title_duplicate: false,
+                message: "성공".into(),
             };
             HttpResponse::build(StatusCode::OK).json(response)
         }
