@@ -121,15 +121,6 @@ pub async fn upload_file(
     };
     let connection: &PgConnection = Borrow::borrow(&connection);
 
-    let extensions = request.extensions();
-    let auth: &AuthValue = match extensions.get::<AuthValue>() {
-        None => {
-            let response = ServerErrorResponse::new();
-            return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
-        }
-        Some(auth) => auth,
-    };
-
     // 미인증 접근 거부
     let extensions = request.extensions();
     let nonauth = AuthValue::new();
@@ -252,7 +243,11 @@ pub async fn update_file(
         return HttpResponse::build(StatusCode::UNAUTHORIZED).json(response);
     }
 
-    let content_length = body.content.chars().count() as i64;
+    let content_length = body
+        .content
+        .clone()
+        .map(|e| e.chars().count() as i64)
+        .unwrap_or(0);
 
     let result = connection.transaction::<_, Error, _>(|| {
         let file_id: i64 = tb_file::dsl::tb_file
