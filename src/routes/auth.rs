@@ -3,7 +3,9 @@ use std::borrow::Borrow;
 use std::sync::Mutex;
 
 // thirdparty
-use actix_web::{delete, http::StatusCode, post, put, web, web::Data, HttpResponse, Responder};
+use actix_web::{
+    cookie::Cookie, delete, http::StatusCode, post, put, web, web::Data, HttpResponse, Responder,
+};
 use diesel::dsl::{exists, select};
 use diesel::*;
 use serde::{Deserialize, Serialize};
@@ -134,14 +136,16 @@ pub async fn login(
 
     match user_result {
         Ok(users) => {
-            let response = if users.is_empty() {
-                LoginResponse {
+            if users.is_empty() {
+                let response = LoginResponse {
                     success: false,
                     login_failed: true,
                     access_token: "".to_owned(),
                     refresh_token: "".to_owned(),
                     message: "login failed".to_owned(),
-                }
+                };
+
+                HttpResponse::build(StatusCode::OK).json(response)
             } else {
                 let user = &users[0];
                 let salt = &user.salt;
@@ -172,26 +176,45 @@ pub async fn login(
                     let access_token =
                         lib::jwt::create_access_token(user.id, user.user_type.clone());
 
-                    LoginResponse {
+                    let access_token_cookie = Cookie::build("access_token", access_token.clone())
+                        .http_only(true)
+                        .max_age(time::Duration::hours(1))
+                        .path("/")
+                        .finish();
+
+                    // let refresh_token_cookie =
+                    //     Cookie::build("refresh_token", refresh_token.clone())
+                    //         .http_only(true)
+                    //         .max_age(time::Duration::days(365))
+                    //         .path("/")
+                    //         .finish();
+
+                    let response = LoginResponse {
                         success: true,
                         login_failed: false,
                         access_token: access_token,
                         refresh_token: refresh_token,
                         message: "success".to_owned(),
-                    }
+                    };
+
+                    let mut http_response = HttpResponse::build(StatusCode::OK).json(response);
+                    http_response.add_cookie(&access_token_cookie).unwrap();
+                    //http_response.add_cookie(&refresh_token_cookie).unwrap();
+
+                    http_response
                 } else {
                     log::info!("로그인 실패: 패스워드 불일치");
-                    LoginResponse {
+                    let response = LoginResponse {
                         success: false,
                         login_failed: true,
                         access_token: "".to_owned(),
                         refresh_token: "".to_owned(),
                         message: "login failed".to_owned(),
-                    }
-                }
-            };
+                    };
 
-            HttpResponse::build(StatusCode::OK).json(response)
+                    HttpResponse::build(StatusCode::OK).json(response)
+                }
+            }
         }
         Err(error) => {
             log::error!("login select query error: {}", error);
@@ -256,7 +279,11 @@ pub async fn logout(
                 message: "logout success".to_owned(),
             };
 
-            HttpResponse::build(StatusCode::OK).json(response)
+            let mut http_response = HttpResponse::build(StatusCode::OK).json(response);
+            http_response.del_cookie("access_token");
+            http_response.del_cookie("refresh_token");
+
+            http_response
         }
         Err(error) => {
             log::error!("logout error: {}", error);
@@ -322,13 +349,15 @@ pub async fn refresh(
 
                         match result {
                             Ok(select_user) => {
-                                let response = if select_user.is_empty() {
-                                    RefreshResponse {
+                                if select_user.is_empty() {
+                                    let response = RefreshResponse {
                                         success: false,
                                         expired: false,
                                         access_token: "".into(),
                                         message: "user not exists".to_owned(),
-                                    }
+                                    };
+
+                                    HttpResponse::build(StatusCode::OK).json(response)
                                 } else {
                                     let user_type = select_user[0].user_type.clone();
 
@@ -336,15 +365,27 @@ pub async fn refresh(
                                     let access_token =
                                         lib::jwt::create_access_token(user_id, user_type);
 
-                                    RefreshResponse {
+                                    let access_token_cookie =
+                                        Cookie::build("access_token", access_token.clone())
+                                            .http_only(true)
+                                            .max_age(time::Duration::hours(1))
+                                            .path("/")
+                                            .finish();
+
+                                    let response = RefreshResponse {
                                         success: true,
                                         expired: false,
                                         access_token: access_token,
                                         message: "refresh success".to_owned(),
-                                    }
-                                };
+                                    };
 
-                                HttpResponse::build(StatusCode::OK).json(response)
+                                    let mut http_response =
+                                        HttpResponse::build(StatusCode::OK).json(response);
+
+                                    http_response.add_cookie(&access_token_cookie).unwrap();
+
+                                    http_response
+                                }
                             }
                             Err(error) => {
                                 log::error!("database error: {:?}", error);

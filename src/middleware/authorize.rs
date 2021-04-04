@@ -1,10 +1,12 @@
 use std::borrow::Borrow;
 use std::pin::Pin;
+use std::str::FromStr;
 use std::task::{Context, Poll};
 
 use actix_service::{Service, Transform};
 use actix_web::{
     dev::{ServiceRequest, ServiceResponse},
+    http::Cookie,
     Error,
 };
 use futures::future::{ok, Ready};
@@ -69,39 +71,52 @@ where
         let (request, payload) = request.into_parts();
 
         let _path = request.path().to_string();
-        let token = request.headers().get("authorization");
+        //let token = request.headers().get("access_token");
+        let token = request
+            .headers()
+            .get("Cookie")
+            .map(|cookie| cookie.to_str().ok())
+            .flatten()
+            .map(|cookie_text| Cookie::from_str(cookie_text).ok())
+            .flatten()
+            .map(|cookie| {
+                println!("테스트");
+                println!("쿠키 {:?}", cookie);
+                println!("밸루 {:?}", cookie.value());
+                cookie.value().to_owned()
+            });
+
+        //let cookie: Cookie = Cookie::from_str(cookie_text).unwrap();
 
         println!("{:?}", request.headers());
 
         let mut auth_value = AuthValue::new();
 
         if let Some(token) = token {
-            if let Ok(token) = token.to_str() {
-                let token = token.to_string();
+            let token = token.to_string();
 
-                println!("{}", token);
+            println!("{}", token);
 
-                let decoded_result = jwt::verify(token);
+            let decoded_result = jwt::verify(token);
 
-                if let Some(decoded_result) = decoded_result {
-                    use diesel::*;
-                    //use std::borrow::Borrow;
-                    use actix_web::web::Data;
-                    use std::sync::Mutex;
+            if let Some(decoded_result) = decoded_result {
+                use diesel::*;
+                //use std::borrow::Borrow;
+                use actix_web::web::Data;
+                use std::sync::Mutex;
 
-                    //let connection: &Data<Mutex<PgConnection>> = request.app_data();
+                //let connection: &Data<Mutex<PgConnection>> = request.app_data();
 
-                    if let Some(connection) = request.app_data::<Data<Mutex<PgConnection>>>() {
-                        if let Ok(connection) = connection.lock() {
-                            let connection: &PgConnection = Borrow::borrow(&connection);
+                if let Some(connection) = request.app_data::<Data<Mutex<PgConnection>>>() {
+                    if let Ok(connection) = connection.lock() {
+                        let connection: &PgConnection = Borrow::borrow(&connection);
 
-                            let user = tb_user::dsl::tb_user
-                                .filter(tb_user::dsl::id.eq(decoded_result))
-                                .get_result::<SelectUser>(connection);
+                        let user = tb_user::dsl::tb_user
+                            .filter(tb_user::dsl::id.eq(decoded_result))
+                            .get_result::<SelectUser>(connection);
 
-                            if let Ok(user) = user {
-                                auth_value.set_values(true, user.id, user.user_type);
-                            }
+                        if let Ok(user) = user {
+                            auth_value.set_values(true, user.id, user.user_type);
                         }
                     }
                 }

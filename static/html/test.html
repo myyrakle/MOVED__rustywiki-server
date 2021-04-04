@@ -1,20 +1,23 @@
 <html>
     <body>
         <button onclick = "foo()">버튼</button>
+        <hr>
+        <form action="/">
+            <button >이동</button>
+        </form>
     </body>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
     <script>
         async function foo(){
-            axios.defaults.baseURL = 'http://127.0.0.1:11111';
+            // axios.defaults.baseURL = 'http://127.0.0.1:11111';
             axios.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8';
             axios.defaults.headers.post['Access-Control-Allow-Origin'] = '*';
 
             const response = await axios.post(
-                "http://127.0.0.1:11111/auth/signup", 
+                "http://192.168.1.2:11111/auth/login", 
                 {   
-                    "email":"sssanxsdsg861227",
-                    "password": "asdf", 
-                    "nickname": "aff"
+                    "email":"foobar2@naver.com",
+                    "password": "asdf"
                 }, 
                 {
                     headers:{
@@ -28,5 +31,28 @@
             alert(JSON.stringify(json));
         }
 
+
+        async function logout(){
+            // axios.defaults.baseURL = 'http://127.0.0.1:11111';
+            axios.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8';
+            axios.defaults.headers.post['Access-Control-Allow-Origin'] = '*';
+
+            const response = await axios.delete(
+                "http://192.168.1.2:11111/auth/logout", 
+                {   
+                    "email":"foobar2@naver.com",
+                    "password": "asdf"
+                }, 
+                {
+                    headers:{
+                        'Content-Type': 'application/json'
+                    },
+                    withCredentials: true
+                }
+            ); 
+            const json = response.data;
+
+            alert(JSON.stringify(json));
+        }
     </script>
 </html>

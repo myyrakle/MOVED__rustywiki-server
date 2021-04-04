@@ -91,6 +91,13 @@ async fn main() -> std::io::Result<()> {
                     .allowed_origin("http://localhost:11111")
                     .allowed_origin("http://127.0.0.1:11111")
                     .allowed_origin("http://125.133.80.144:11111")
+                    .allowed_origin("http://222.121.122.142:5500")
+                    .allowed_origin("http://127.0.0.1:5500")
+                    .allowed_origin("http://127.0.0.1:5500/")
+                    .allowed_origin("http://127.0.0.1:3000")
+                    .allowed_origin("http://localhost:3000")
+                    .allowed_origin("http://127.0.0.1:3000/")
+                    .allowed_origin("http://localhost:3000/")
                     .allowed_origin("http://192.168.1.2:11111")
                     .supports_credentials(),
             )

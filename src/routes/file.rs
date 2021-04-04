@@ -18,7 +18,7 @@ use uuid::Uuid;
 // in crate
 use crate::lib;
 //use crate::models::InsertUser;
-use crate::models::{InsertFile, InsertFileHistory, SelectFile, SelectFileHistory};
+use crate::models::{InsertFile, InsertFileHistory /*SelectFile, SelectFileHistory*/};
 use crate::response::{BadParameter, ServerErrorResponse, UnauthorizedResponse};
 use crate::schema::{tb_file, tb_file_history};
 use lib::AuthValue;
