@@ -80,9 +80,9 @@ where
             .map(|cookie_text| Cookie::from_str(cookie_text).ok())
             .flatten()
             .map(|cookie| {
-                println!("테스트");
-                println!("쿠키 {:?}", cookie);
-                println!("밸루 {:?}", cookie.value());
+                // println!("테스트");
+                // println!("쿠키 {:?}", cookie);
+                // println!("밸루 {:?}", cookie.value());
                 cookie.value().to_owned()
             });
 

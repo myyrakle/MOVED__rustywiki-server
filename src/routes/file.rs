@@ -6,7 +6,7 @@ use std::sync::Mutex;
 // thirdparty
 use actix_multipart::Multipart;
 use actix_web::{
-    http::StatusCode, post, put, web, web::Data, HttpRequest, HttpResponse, Responder,
+    get, http::StatusCode, post, put, web, web::Data, HttpRequest, HttpResponse, Responder,
 };
 use diesel::*;
 use futures::{StreamExt, TryStreamExt};
@@ -220,6 +220,95 @@ pub struct FileUpdateResponse {
 
 #[put("/file")]
 pub async fn update_file(
+    web::Json(body): web::Json<FileUpdateParam>,
+    request: HttpRequest,
+    connection: Data<Mutex<PgConnection>>,
+) -> impl Responder {
+    let connection = match connection.lock() {
+        Err(_) => {
+            log::error!("database connection lock error");
+            let response = ServerErrorResponse::new();
+            return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+        }
+        Ok(connection) => connection,
+    };
+    let connection: &PgConnection = Borrow::borrow(&connection);
+
+    // 미인증 접근 거부
+    let extensions = request.extensions();
+    let nonauth = AuthValue::new();
+    let auth: &AuthValue = extensions.get::<AuthValue>().unwrap_or(&nonauth);
+    if !auth.is_authorized() {
+        let response = UnauthorizedResponse::new();
+        return HttpResponse::build(StatusCode::UNAUTHORIZED).json(response);
+    }
+
+    let content_length = body
+        .content
+        .clone()
+        .map(|e| e.chars().count() as i64)
+        .unwrap_or(0);
+
+    let result = connection.transaction::<_, Error, _>(|| {
+        let file_id: i64 = tb_file::dsl::tb_file
+            .filter(tb_file::dsl::title.eq(&body.title))
+            .select(tb_file::dsl::id)
+            .get_result(connection)?;
+
+        let prev_count: i64 = tb_file_history::dsl::tb_file_history
+            .filter(tb_file_history::dsl::file_id.eq(file_id))
+            .filter(tb_file_history::dsl::latest_yn.eq(true))
+            .select(tb_file_history::dsl::char_count)
+            .get_result(connection)?;
+
+        diesel::update(tb_file_history::dsl::tb_file_history)
+            .filter(tb_file_history::dsl::file_id.eq(file_id))
+            .filter(tb_file_history::dsl::latest_yn.eq(true))
+            .set(tb_file_history::dsl::latest_yn.eq(false))
+            .execute(connection)?;
+
+        let insert_file_history = InsertFileHistory {
+            file_id: file_id,
+            writer_id: auth.user_id,
+            content: body.content,
+            char_count: content_length,
+            increase: content_length - prev_count,
+        };
+
+        diesel::insert_into(tb_file_history::table)
+            .values(insert_file_history)
+            .execute(connection)
+    });
+
+    match result {
+        Ok(_) => {
+            let response = FileUpdateResponse {
+                success: true,
+                message: "성공".into(),
+            };
+            HttpResponse::build(StatusCode::OK).json(response)
+        }
+        Err(error) => {
+            log::error!("error: {}", error);
+            let response = ServerErrorResponse::new();
+            HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct FileReadParam {
+    pub title: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct FileReadResponse {
+    pub success: bool,
+    pub message: String,
+}
+
+#[get("/file")]
+pub async fn read_file(
     web::Json(body): web::Json<FileUpdateParam>,
     request: HttpRequest,
     connection: Data<Mutex<PgConnection>>,
