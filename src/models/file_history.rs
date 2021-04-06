@@ -18,6 +18,6 @@ pub struct SelectFileHistory {
     pub content: String,
     pub char_count: i64,
     pub increase: i64,
-    pub reg_time: i64,
+    pub reg_utc: i64,
     pub latest_yn: bool,
 }

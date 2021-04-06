@@ -1,6 +1,9 @@
 pub mod doc;
 pub use doc::*;
 
+pub mod history;
+pub use history::*;
+
 pub mod search;
 pub use search::*;
 
