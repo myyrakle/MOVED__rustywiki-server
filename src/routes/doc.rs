@@ -63,7 +63,7 @@ pub async fn write_doc(
     // 문서 개수
     let content_length = body.content.chars().count() as i64;
 
-    // 문서가 존재 여부로 분기 처리
+    // 문서 존재 여부로 분기 처리
     match exists_document_result {
         Ok(exists_document) => {
             let result = if exists_document {

@@ -16,4 +16,5 @@ pub struct SelectFile {
     pub filepath: String,
     pub use_yn: bool,
     pub reg_time: i64,
+    pub recent_history_id: Option<i64>,
 }

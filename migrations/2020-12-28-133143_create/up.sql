@@ -50,10 +50,11 @@ COMMENT ON COLUMN "tb_document"."update_utc" IS '최종 수정시간';
 CREATE TABLE "tb_file" (
 	"id"	serial8		NOT NULL,
 	"uploader_id"	int8		NOT NULL,
-	"title"	text		NULL,
+	"title"	text		NOT NULL,
 	"filepath"	text		NOT NULL,
 	"use_yn"	bool	DEFAULT true	NOT NULL,
-	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
+	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
+	"recent_history_id"	int8		NULL
 );
 
 CREATE TABLE "tb_refresh_token" (
@@ -110,7 +111,7 @@ CREATE TABLE "tb_file_history" (
 	"id"	serial8		NOT NULL,
 	"writer_id"	int8		NOT NULL,
 	"file_id"	int8		NOT NULL,
-	"content"	text		NULL,
+	"content"	text		NOT NULL,
 	"char_count"	int8		NOT NULL,
 	"increase"	int8		NOT NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
