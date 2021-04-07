@@ -135,79 +135,87 @@ pub async fn upload_file(
         let response = BadParameter::new();
         return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
     }
-    let body = body.unwrap();
-    let file_path = body.file.path.clone();
-    let file_data = body.file.data.clone();
 
-    // 스레드풀을 사용한 파일 쓰기
-    let file_write = async {
-        let mut f = match web::block(move || std::fs::File::create(&file_path)).await {
-            Ok(f) => f,
-            Err(_) => {
-                return None;
+    match body {
+        Some(body) => {
+            let file_path = body.file.path.clone();
+            let file_data = body.file.data.clone();
+
+            // 스레드풀을 사용한 파일 쓰기
+            let file_write = async {
+                let mut f = match web::block(move || std::fs::File::create(&file_path)).await {
+                    Ok(f) => f,
+                    Err(_) => {
+                        return None;
+                    }
+                };
+                match web::block(move || f.write_all(&file_data).map(|_| f)).await {
+                    Ok(_) => Some(()),
+                    Err(_) => None,
+                }
             }
-        };
-        match web::block(move || f.write_all(&file_data).map(|_| f)).await {
-            Ok(_) => Some(()),
-            Err(_) => None,
+            .await;
+            if file_write.is_none() {
+                let response = FileUploadResponse {
+                    success: false,
+                    file_write_failed: true,
+                    file_too_big: false,
+                    title_duplicate: false,
+                };
+                return HttpResponse::build(StatusCode::OK).json(response);
+            }
+
+            let result = connection.transaction::<_, Error, _>(|| {
+                let insert_file = InsertFile {
+                    uploader_id: auth.user_id,
+                    title: body.title,
+                    filepath: body.file.path,
+                };
+
+                let file_id: i64 = diesel::insert_into(tb_file::table)
+                    .values(insert_file)
+                    .returning(tb_file::dsl::id)
+                    .get_result(connection)?;
+
+                let insert_file_history = InsertFileHistory {
+                    file_id: file_id,
+                    writer_id: auth.user_id,
+                    content: body.content,
+                    char_count: 0,
+                    increase: 0,
+                };
+
+                let history_id: i64 = diesel::insert_into(tb_file_history::table)
+                    .values(insert_file_history)
+                    .returning(tb_file_history::dsl::id)
+                    .get_result(connection)?;
+
+                diesel::update(tb_file::table)
+                    .filter(tb_file::dsl::id.eq(file_id))
+                    .set(tb_file::dsl::recent_history_id.eq(history_id))
+                    .execute(connection)
+            });
+
+            match result {
+                Ok(_) => {
+                    let response = FileUploadResponse {
+                        success: true,
+                        file_write_failed: false,
+                        file_too_big: false,
+                        title_duplicate: false,
+                    };
+                    HttpResponse::build(StatusCode::OK).json(response)
+                }
+                Err(error) => {
+                    log::error!("error: {}", error);
+                    let response = ServerErrorResponse::new();
+                    HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
+                }
+            }
         }
-    }
-    .await;
-    if file_write.is_none() {
-        let response = FileUploadResponse {
-            success: false,
-            file_write_failed: true,
-            file_too_big: false,
-            title_duplicate: false,
-        };
-        return HttpResponse::build(StatusCode::OK).json(response);
-    }
-
-    let result = connection.transaction::<_, Error, _>(|| {
-        let insert_file = InsertFile {
-            uploader_id: auth.user_id,
-            title: body.title,
-            filepath: body.file.path,
-        };
-
-        let file_id: i64 = diesel::insert_into(tb_file::table)
-            .values(insert_file)
-            .returning(tb_file::dsl::id)
-            .get_result(connection)?;
-
-        let insert_file_history = InsertFileHistory {
-            file_id: file_id,
-            writer_id: auth.user_id,
-            content: body.content,
-            char_count: 0,
-            increase: 0,
-        };
-
-        let history_id: i64 = diesel::insert_into(tb_file_history::table)
-            .values(insert_file_history)
-            .returning(tb_file_history::dsl::id)
-            .get_result(connection)?;
-
-        diesel::update(tb_file::table)
-            .filter(tb_file::dsl::id.eq(file_id))
-            .set(tb_file::dsl::recent_history_id.eq(history_id))
-            .execute(connection)
-    });
-
-    match result {
-        Ok(_) => {
-            let response = FileUploadResponse {
-                success: true,
-                file_write_failed: false,
-                file_too_big: false,
-                title_duplicate: false,
-            };
-            HttpResponse::build(StatusCode::OK).json(response)
-        }
-        Err(error) => {
-            log::error!("error: {}", error);
-            let response = ServerErrorResponse::new();
-            HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
+        None => {
+            let response = BadParameter::new();
+            HttpResponse::build(StatusCode::BAD_REQUEST).json(response)
         }
     }
 }
