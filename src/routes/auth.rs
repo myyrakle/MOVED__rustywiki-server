@@ -198,9 +198,7 @@ pub async fn login(
                     };
 
                     let mut http_response = HttpResponse::build(StatusCode::OK).json(response);
-                    http_response.add_cookie(&access_token_cookie).unwrap();
-                    //http_response.add_cookie(&refresh_token_cookie).unwrap();
-
+                    http_response.add_cookie(&access_token_cookie).unwrap_or(());
                     http_response
                 } else {
                     log::info!("로그인 실패: 패스워드 불일치");
@@ -287,10 +285,7 @@ pub async fn logout(
                 .path("/")
                 .finish();
 
-            http_response.add_cookie(&access_token_cookie).unwrap();
-
-            //http_response.del_cookie("access_token");
-            //http_response.del_cookie("refresh_token");
+            http_response.add_cookie(&access_token_cookie).unwrap_or(());
 
             http_response
         }
@@ -391,7 +386,7 @@ pub async fn refresh(
                                     let mut http_response =
                                         HttpResponse::build(StatusCode::OK).json(response);
 
-                                    http_response.add_cookie(&access_token_cookie).unwrap();
+                                    http_response.add_cookie(&access_token_cookie).unwrap_or(());
 
                                     http_response
                                 }
