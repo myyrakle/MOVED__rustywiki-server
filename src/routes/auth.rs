@@ -172,6 +172,8 @@ pub async fn login(
                             .json(response);
                     }
 
+                    use actix_web::cookie::Cookie;
+
                     // 액세스 토큰 생성
                     let access_token =
                         lib::jwt::create_access_token(user.id, user.user_type.clone());

@@ -3,18 +3,17 @@ use std::borrow::Borrow;
 use std::sync::Mutex;
 
 // thirdparty
-use actix_web::{
-    delete, get, http::StatusCode, post, put, web, web::Data, HttpRequest, HttpResponse, Responder,
-};
+use actix_web::{get, http::StatusCode, web, web::Data, HttpRequest, HttpResponse, Responder};
 use diesel::*;
 use serde::{Deserialize, Serialize};
 
 // in crate
-use crate::lib::AuthValue;
+//use crate::lib::AuthValue;
 //use crate::models::SelectUser;
 use crate::models::{SelectDocument, SelectDocumentHistory};
-use crate::response::{ServerErrorResponse, UnauthorizedResponse};
+use crate::response::ServerErrorResponse;
 use crate::schema::{tb_document, tb_document_history};
+use crate::value::DocumentHistory;
 //use crate::schema::tb_user;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -27,6 +26,7 @@ pub struct ReadHistoryParam {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ReadHistoryResponse {
     pub success: bool,
+    pub list: Vec<DocumentHistory>,
     pub total_count: i64,
     pub message: String,
 }
@@ -74,6 +74,7 @@ pub async fn read_document_history_list(
         Ok((history_list, total_count)) => {
             let response = ReadHistoryResponse {
                 success: true,
+                list: history_list.into_iter().map(|e| e.into()).collect(),
                 message: "".into(),
                 total_count: total_count,
             };

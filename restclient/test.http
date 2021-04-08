@@ -29,7 +29,6 @@ Content-Type: application/json
 ### 내 정보 조회
 GET http://{{host}}/user/my-info
 Content-Type: application/json
-Authorization: {{access_token}}
 
 {
 }
@@ -38,7 +37,6 @@ Authorization: {{access_token}}
 ### 회원탈퇴
 DELETE http://{{host}}/user/close-my-account
 Content-Type: application/json
-Authorization: {{access_token}}
 
 {
 }
@@ -55,24 +53,39 @@ Content-Type: application/json
 }
 ###
 
+### signup
+POST http://{{host}}/auth/signup
+Content-Type: application/json
+
+{
+    "email":"foobar354@naver.com",
+    "password": "asdf", 
+    "nickname": "김불닭"
+}
+###
+
 ### login
 POST http://{{host}}/auth/login
 Content-Type: application/json
 
 {
-    "email":"foobar2@naver.com",
+    "email":"foobar354@naver.com",
     "password": "asdf"
 }
 ###
 
-{"success":true,"login_failed":false,"access_token":"","refresh_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJ1c2VyX3R5cGUiOiJVU0VSIiwiZXhwIjoxNjQ3ODI1MjIyfQ.6CDyhNk0bKfvBi-EMZCjqPsT-wqo2ZRFwHqNsHeQdsw","message":"success"}
+### login
+DELETE http://{{host}}/auth/logout
+Content-Type: application/json
 
-@token = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJ1c2VyX3R5cGUiOiJVU0VSIiwiZXhwIjoxNjE2MjkyODIyfQ.es1fc15zxtMSVOk3gCo3F39RSVPF99DJaXv-Aa_JqN0
+{
+    "refresh_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJ1c2VyX3R5cGUiOiJVU0VSIiwiZXhwIjoxNjQ5Mjg4NDk2fQ.Z7J0RDYPToW1CblK6_1n-TTGAnocsa2FH7o9r6E6XFM"
+}
+###
 
 ###
 GET http://{{host}}
 Content-Type: application/json
-Authorization: {{token}}
 
 {
 }
@@ -81,20 +94,37 @@ Authorization: {{token}}
 ###
 POST http://{{host}}/doc/document
 Content-Type: application/json
-Authorization: {{token}}
 
 {
-    "title": "테스트", 
+    "title": "테스트2", 
+    "content": "으악"
+}
+###
+
+###
+GET http://{{host}}/doc/history?title=테스트2
+Content-Type: application/json
+
+{
+    "title": "테스트2", 
+    "content": "으악"
+}
+###
+
+###
+GET http://{{host}}/doc/search?search_text=김테스
+Content-Type: application/json
+
+{
+    "search_text": "테스트2", 
     "content": "내용2"
 }
 ###
 
 ###
-GET http://{{host}}/doc/docume33nt?title=테스트
+POST http://{{host}}/doc/document?title=테스트
 Content-Type: application/json
-Authorization: {{token}}
 
 {
-    "title": "테스트"
 }
 ###
