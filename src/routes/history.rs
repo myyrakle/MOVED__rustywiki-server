@@ -14,7 +14,6 @@ use crate::models::{SelectDocument, SelectDocumentHistory};
 use crate::response::ServerErrorResponse;
 use crate::schema::{tb_document, tb_document_history};
 use crate::value::DocumentHistory;
-//use crate::schema::tb_user;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ReadHistoryParam {
@@ -86,6 +85,19 @@ pub async fn read_document_history_list(
             HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
         }
     }
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct ReadHistoryDetailParam {
+    pub history_id: i64,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct ReadHistoryDetailResponse {
+    pub success: bool,
+    pub content: DocumentHistory,
+    pub prev_content: Option<DocumentHistory>,
+    pub message: String,
 }
 
 #[get("/doc/history/detail")]
