@@ -8,8 +8,6 @@ use diesel::*;
 use serde::{Deserialize, Serialize};
 
 // in crate
-//use crate::lib::AuthValue;
-//use crate::models::SelectUser;
 use crate::models::SelectDocument;
 use crate::response::ServerErrorResponse;
 use crate::schema::{tb_document, tb_document_history, tb_user};
@@ -105,12 +103,81 @@ pub struct ReadHistoryDetailParam {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ReadHistoryDetailResponse {
     pub success: bool,
-    pub content: DocumentHistory,
-    pub prev_content: Option<DocumentHistory>,
+    pub current_history: DocumentHistory,
+    pub prev_history: Option<DocumentHistory>,
     pub message: String,
 }
 
 #[get("/doc/history/detail")]
-pub async fn read_document_history_detail(_req: HttpRequest) -> impl Responder {
-    "unimplemented"
+pub async fn read_document_history_detail(
+    web::Query(query): web::Query<ReadHistoryDetailParam>,
+    connection: Data<Mutex<PgConnection>>,
+) -> impl Responder {
+    let connection = match connection.lock() {
+        Err(_) => {
+            log::error!("database connection lock error");
+            let response = ServerErrorResponse::new();
+            return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+        }
+        Ok(connection) => connection,
+    };
+    let connection: &PgConnection = Borrow::borrow(&connection);
+
+    let result: Result<(DocumentHistory, Option<DocumentHistory>), diesel::result::Error> =
+        (|| {
+            let current_history = tb_document_history::table
+                .inner_join(
+                    tb_user::table.on(tb_user::dsl::id.eq(tb_document_history::dsl::writer_id)),
+                )
+                .filter(tb_document_history::dsl::id.eq(query.history_id))
+                .select((
+                    tb_document_history::dsl::id,
+                    tb_document_history::dsl::content,
+                    tb_document_history::dsl::char_count,
+                    tb_document_history::dsl::increase,
+                    tb_document_history::dsl::reg_utc,
+                    tb_document_history::dsl::writer_id,
+                    tb_user::dsl::nickname,
+                ))
+                .get_result::<DocumentHistory>(connection)?;
+
+            let prev_history = tb_document_history::table
+                .inner_join(
+                    tb_user::table.on(tb_user::dsl::id.eq(tb_document_history::dsl::writer_id)),
+                )
+                .filter(tb_document_history::dsl::id.ne(query.history_id))
+                .filter(tb_document_history::dsl::reg_utc.le(current_history.reg_utc))
+                .order(tb_document_history::dsl::reg_utc.desc())
+                .limit(1)
+                .select((
+                    tb_document_history::dsl::id,
+                    tb_document_history::dsl::content,
+                    tb_document_history::dsl::char_count,
+                    tb_document_history::dsl::increase,
+                    tb_document_history::dsl::reg_utc,
+                    tb_document_history::dsl::writer_id,
+                    tb_user::dsl::nickname,
+                ))
+                .get_result::<DocumentHistory>(connection)
+                .ok();
+
+            Ok((current_history, prev_history))
+        })();
+
+    match result {
+        Ok((current_history, prev_history)) => {
+            let response = ReadHistoryDetailResponse {
+                success: true,
+                current_history: current_history,
+                prev_history: prev_history,
+                message: "".into(),
+            };
+            HttpResponse::build(StatusCode::OK).json(response)
+        }
+        Err(error) => {
+            log::error!("error: {}", error);
+            let response = ServerErrorResponse::new();
+            HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
+        }
+    }
 }
