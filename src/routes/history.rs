@@ -10,9 +10,9 @@ use serde::{Deserialize, Serialize};
 // in crate
 //use crate::lib::AuthValue;
 //use crate::models::SelectUser;
-use crate::models::{SelectDocument, SelectDocumentHistory};
+use crate::models::SelectDocument;
 use crate::response::ServerErrorResponse;
-use crate::schema::{tb_document, tb_document_history};
+use crate::schema::{tb_document, tb_document_history, tb_user};
 use crate::value::DocumentHistory;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -48,17 +48,27 @@ pub async fn read_document_history_list(
     let limit = query.limit.unwrap_or(10);
     let offset = (query.page.unwrap_or(1) - 1) * limit;
 
-    let result: Result<(Vec<SelectDocumentHistory>, i64), diesel::result::Error> = (|| {
+    let result: Result<(Vec<DocumentHistory>, i64), diesel::result::Error> = (|| {
         let document: SelectDocument = tb_document::dsl::tb_document
             .filter(tb_document::dsl::title.eq(&query.title))
             .get_result(connection)?;
 
-        let history_list: Vec<_> = tb_document_history::dsl::tb_document_history
+        let history_list: Vec<_> = tb_document_history::table
+            .inner_join(tb_user::table.on(tb_user::dsl::id.eq(tb_document_history::dsl::writer_id)))
             .filter(tb_document_history::dsl::document_id.eq(document.id))
             .order(tb_document_history::dsl::reg_utc.desc())
             .offset(offset)
             .limit(limit)
-            .get_results::<SelectDocumentHistory>(connection)?;
+            .select((
+                tb_document_history::dsl::id,
+                tb_document_history::dsl::content,
+                tb_document_history::dsl::char_count,
+                tb_document_history::dsl::increase,
+                tb_document_history::dsl::reg_utc,
+                tb_document_history::dsl::writer_id,
+                tb_user::dsl::nickname,
+            ))
+            .get_results::<DocumentHistory>(connection)?;
 
         use diesel::dsl::count_star;
         let total_count: i64 = tb_document_history::dsl::tb_document_history
@@ -73,7 +83,7 @@ pub async fn read_document_history_list(
         Ok((history_list, total_count)) => {
             let response = ReadHistoryResponse {
                 success: true,
-                list: history_list.into_iter().map(|e| e.into()).collect(),
+                list: history_list,
                 message: "".into(),
                 total_count: total_count,
             };
