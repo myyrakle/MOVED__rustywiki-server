@@ -19,7 +19,7 @@ mod value;
 use lib::AuthValue;
 
 #[get("/")]
-async fn test(
+async fn root(
     request: HttpRequest, /*, _connection: Data<Mutex<PgConnection>>*/
 ) -> impl Responder {
     let extensions = request.extensions();
@@ -44,8 +44,8 @@ pub struct SelectTest {
     pub text: Option<String>,
 }
 
-#[get("/foo")]
-async fn foo(connection: Data<Mutex<PgConnection>>) -> impl Responder {
+#[get("/test")]
+async fn test(connection: Data<Mutex<PgConnection>>) -> impl Responder {
     let connection = match connection.lock() {
         Err(_) => {
             log::error!("database connection lock error");
@@ -86,7 +86,7 @@ async fn main() -> std::io::Result<()> {
     let db = Data::new(Mutex::new(lib::establish_connection()));
     HttpServer::new(move || {
         App::new()
-            .app_data(db.clone())
+            .app_data(db.clone()) //데이터베이스 커넥션 객체 등록
             .wrap(
                 actix_cors::Cors::default()
                     .allowed_origin("http://localhost:11111")
@@ -102,16 +102,16 @@ async fn main() -> std::io::Result<()> {
                     .allowed_origin("http://192.168.1.2:11111")
                     .supports_credentials(),
             )
-            .wrap(middleware::Logger::new())
+            .wrap(middleware::Logger::new()) //로깅용 미들웨어
+            .service(root)
+            .service(test)
             .service(routes::auth::signup)
             .service(routes::auth::login)
             .service(routes::auth::logout)
             .service(routes::auth::refresh)
-            .service(foo)
             .service(routes::file::upload_file)
             .service(routes::user::my_info)
             .service(routes::user::close_my_account)
-            .service(test)
             .service(routes::doc::write_doc)
             .service(routes::doc::read_doc)
             .service(routes::history::read_document_history_list)

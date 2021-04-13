@@ -183,7 +183,7 @@ pub struct ReadDocResponse {
 
 #[get("/doc/document")]
 pub async fn read_doc(
-    web::Json(query): web::Json<ReadDocParam>,
+    web::Query(query): web::Query<ReadDocParam>,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
     let connection = match connection.lock() {
