@@ -4,7 +4,7 @@ use std::sync::Mutex;
 
 // thirdparty
 use actix_web::{
-    get, http::StatusCode, post, web, web::Data, HttpRequest, HttpResponse, Responder,
+    get, http::StatusCode, post, put, web, web::Data, HttpRequest, HttpResponse, Responder,
 };
 use diesel::dsl::{exists, select};
 use diesel::*;
@@ -157,6 +157,76 @@ pub async fn write_doc(
                     HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
                 }
             }
+        }
+        Err(error) => {
+            log::error!("error: {}", error);
+            let response = ServerErrorResponse::new();
+            HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct RollbackDocParam {
+    pub history_id: i64,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct RollbackDocResponse {
+    pub success: bool,
+    pub message: String,
+}
+
+#[put("/doc/document/rollback")]
+pub async fn rollback_doc(
+    web::Json(body): web::Json<RollbackDocParam>,
+    request: HttpRequest,
+    connection: Data<Mutex<PgConnection>>,
+) -> impl Responder {
+    let connection = match connection.lock() {
+        Err(_) => {
+            log::error!("database connection lock error");
+            let response = ServerErrorResponse::new();
+            return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+        }
+        Ok(connection) => connection,
+    };
+    let connection: &PgConnection = Borrow::borrow(&connection);
+
+    // 미인증 접근 거부
+    let extensions = request.extensions();
+    let nonauth = AuthValue::new();
+    let auth: &AuthValue = extensions.get::<AuthValue>().unwrap_or(&nonauth);
+    if !auth.is_authorized() {
+        let response = UnauthorizedResponse::new();
+        return HttpResponse::build(StatusCode::UNAUTHORIZED).json(response);
+    }
+
+    let result = connection.transaction(|| {
+        let selected_history: SelectDocumentHistory = tb_document_history::dsl::tb_document_history
+            .filter(tb_document_history::dsl::id.eq(body.history_id))
+            .get_result(connection)?;
+
+        let insert_history = InsertDocumentHistory {
+            writer_id: auth.user_id,
+            document_id: selected_history.document_id,
+            content: selected_history.content,
+            char_count: selected_history.char_count,
+            increase: selected_history.increase,
+        };
+
+        diesel::insert_into(tb_document_history::dsl::tb_document_history)
+            .values(insert_history)
+            .execute(connection)
+    });
+
+    match result {
+        Ok(_) => {
+            let response = RollbackDocResponse {
+                success: true,
+                message: "문서 되돌리기 성공".into(),
+            };
+            HttpResponse::build(StatusCode::OK).json(response)
         }
         Err(error) => {
             log::error!("error: {}", error);
