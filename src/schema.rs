@@ -7,6 +7,7 @@ table! {
         content -> Text,
         reg_utc -> Int8,
         open_yn -> Bool,
+        use_yn -> Bool,
     }
 }
 
@@ -17,7 +18,7 @@ table! {
         writer_id -> Int8,
         content -> Text,
         reg_utc -> Int8,
-        open_yn -> Bool,
+        use_yn -> Bool,
     }
 }
 
@@ -42,6 +43,7 @@ table! {
         reg_utc -> Int8,
         latest_yn -> Bool,
         rollback_id -> Nullable<Int8>,
+        use_yn -> Bool,
     }
 }
 
@@ -51,9 +53,9 @@ table! {
         uploader_id -> Int8,
         title -> Text,
         filepath -> Text,
-        use_yn -> Bool,
         reg_utc -> Int8,
         recent_history_id -> Nullable<Int8>,
+        use_yn -> Bool,
     }
 }
 
@@ -67,6 +69,7 @@ table! {
         increase -> Int8,
         reg_utc -> Int8,
         latest_yn -> Bool,
+        use_yn -> Bool,
     }
 }
 
@@ -99,8 +102,8 @@ table! {
         send_user_id -> Int8,
         receive_user_id -> Int8,
         reason -> Text,
-        use_yn -> Bool,
         reg_utc -> Int8,
+        use_yn -> Bool,
     }
 }
 
@@ -111,6 +114,9 @@ table! {
         dead_yn -> Bool,
     }
 }
+
+joinable!(tb_document_history -> tb_document (document_id));
+joinable!(tb_document_history -> tb_user (writer_id));
 
 allow_tables_to_appear_in_same_query!(
     tb_debate,

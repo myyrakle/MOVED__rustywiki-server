@@ -17,4 +17,5 @@ pub struct SelectDebate {
     pub subject: String,
     pub content: String,
     pub reg_utc: i64,
+    pub use_yn: bool,
 }

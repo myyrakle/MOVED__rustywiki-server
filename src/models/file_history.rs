@@ -20,4 +20,5 @@ pub struct SelectFileHistory {
     pub increase: i64,
     pub reg_utc: i64,
     pub latest_yn: bool,
+    pub use_yn: bool,
 }

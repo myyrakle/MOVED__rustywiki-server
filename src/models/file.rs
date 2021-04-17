@@ -14,7 +14,7 @@ pub struct SelectFile {
     pub uploader_id: i64,
     pub title: String,
     pub filepath: String,
-    pub use_yn: bool,
     pub reg_time: i64,
     pub recent_history_id: Option<i64>,
+    pub use_yn: bool,
 }

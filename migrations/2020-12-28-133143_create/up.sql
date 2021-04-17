@@ -31,7 +31,8 @@ CREATE TABLE "tb_document_history" (
 	"increase"	int8		NOT NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
 	"latest_yn"	bool	DEFAULT true	NOT NULL,
-	"rollback_id"	int8		NULL
+	"rollback_id"	int8		NULL,
+	"use_yn"	bool	DEFAULT true	NOT NULL
 );
 
 COMMENT ON COLUMN "tb_document_history"."writer_id" IS '작성자 식별자';
@@ -53,9 +54,9 @@ CREATE TABLE "tb_file" (
 	"uploader_id"	int8		NOT NULL,
 	"title"	text		NOT NULL,
 	"filepath"	text		NOT NULL,
-	"use_yn"	bool	DEFAULT true	NOT NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
-	"recent_history_id"	int8		NULL
+	"recent_history_id"	int8		NULL,
+	"use_yn"	bool	DEFAULT true	NOT NULL
 );
 
 CREATE TABLE "tb_refresh_token" (
@@ -79,7 +80,8 @@ CREATE TABLE "tb_debate" (
 	"subject"	text		NOT NULL,
 	"content"	text		NOT NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
-	"open_yn"	bool	DEFAULT true	NOT NULL
+	"open_yn"	bool	DEFAULT true	NOT NULL,
+	"use_yn"	bool	DEFAULT true	NOT NULL
 );
 
 COMMENT ON COLUMN "tb_debate"."subject" IS '토론 주제';
@@ -90,7 +92,7 @@ CREATE TABLE "tb_debate_comment" (
 	"writer_id"	int8		NOT NULL,
 	"content"	text		NOT NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
-	"open_yn"	bool	DEFAULT true	NOT NULL
+	"use_yn"	bool	DEFAULT true	NOT NULL
 );
 
 CREATE TABLE "tb_user_report" (
@@ -98,15 +100,15 @@ CREATE TABLE "tb_user_report" (
 	"send_user_id"	int8		NOT NULL,
 	"receive_user_id"	int8		NOT NULL,
 	"reason"	text		NOT NULL,
-	"use_yn"	bool	DEFAULT true	NOT NULL,
-	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL
+	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
+	"use_yn"	bool	DEFAULT true	NOT NULL
 );
 
 COMMENT ON COLUMN "tb_user_report"."reason" IS '이메일.  unique';
 
-COMMENT ON COLUMN "tb_user_report"."use_yn" IS '사용여부';
-
 COMMENT ON COLUMN "tb_user_report"."reg_utc" IS '등록시간';
+
+COMMENT ON COLUMN "tb_user_report"."use_yn" IS '사용여부';
 
 CREATE TABLE "tb_file_history" (
 	"id"	serial8		NOT NULL,
@@ -116,7 +118,8 @@ CREATE TABLE "tb_file_history" (
 	"char_count"	int8		NOT NULL,
 	"increase"	int8		NOT NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
-	"latest_yn"	bool	DEFAULT false	NOT NULL
+	"latest_yn"	bool	DEFAULT false	NOT NULL,
+	"use_yn"	bool	DEFAULT true	NOT NULL
 );
 
 COMMENT ON COLUMN "tb_file_history"."writer_id" IS '작성자 식별자';
@@ -168,8 +171,22 @@ ALTER TABLE "tb_file_history" ADD CONSTRAINT "PK_TB_FILE_HISTORY" PRIMARY KEY (
 	"file_id"
 );
 
+ALTER TABLE "tb_document_history" ADD CONSTRAINT "FK_tb_user_TO_tb_document_history_1" FOREIGN KEY (
+	"writer_id"
+)
+REFERENCES "tb_user" (
+	"id"
+);
+
+ALTER TABLE "tb_document_history" ADD CONSTRAINT "FK_tb_document_TO_tb_document_history_1" FOREIGN KEY (
+	"document_id"
+)
+REFERENCES "tb_document" (
+	"id"
+);
 
 
 -- 인덱스 등 추가
 CREATE index "tb_document_title_gin" on "tb_document" using gin("title" gin_trgm_ops);
+CREATE index "tb_document_history_document_id_index" on "tb_document_history"("document_id");
 CREATE unique index "tb_document_title_unique" on "tb_document"("title");
