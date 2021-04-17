@@ -30,7 +30,8 @@ CREATE TABLE "tb_document_history" (
 	"char_count"	int8		NOT NULL,
 	"increase"	int8		NOT NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
-	"latest_yn"	bool	DEFAULT true	NOT NULL
+	"latest_yn"	bool	DEFAULT true	NOT NULL,
+	"rollback_id"	int8		NULL
 );
 
 COMMENT ON COLUMN "tb_document_history"."writer_id" IS '작성자 식별자';
@@ -85,7 +86,7 @@ COMMENT ON COLUMN "tb_debate"."subject" IS '토론 주제';
 
 CREATE TABLE "tb_debate_comment" (
 	"id"	serial8		NOT NULL,
-	"id2"	int8		NOT NULL,
+	"debate_id"	int8		NOT NULL,
 	"writer_id"	int8		NOT NULL,
 	"content"	text		NOT NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
@@ -111,7 +112,7 @@ CREATE TABLE "tb_file_history" (
 	"id"	serial8		NOT NULL,
 	"writer_id"	int8		NOT NULL,
 	"file_id"	int8		NOT NULL,
-	"content"	text		NOT NULL,
+	"content"	text	DEFAULT ''	NOT NULL,
 	"char_count"	int8		NOT NULL,
 	"increase"	int8		NOT NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
@@ -152,7 +153,7 @@ ALTER TABLE "tb_debate" ADD CONSTRAINT "PK_TB_DEBATE" PRIMARY KEY (
 
 ALTER TABLE "tb_debate_comment" ADD CONSTRAINT "PK_TB_DEBATE_COMMENT" PRIMARY KEY (
 	"id",
-	"id2",
+	"debate_id",
 	"writer_id"
 );
 
@@ -166,6 +167,8 @@ ALTER TABLE "tb_file_history" ADD CONSTRAINT "PK_TB_FILE_HISTORY" PRIMARY KEY (
 	"writer_id",
 	"file_id"
 );
+
+
 
 -- 인덱스 등 추가
 CREATE index "tb_document_title_gin" on "tb_document" using gin("title" gin_trgm_ops);

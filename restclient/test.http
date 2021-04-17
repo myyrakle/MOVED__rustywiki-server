@@ -102,7 +102,7 @@ Content-Type: application/json
 ###
 
 ###
-GET http://{{host}}/doc/history?title=테스트2
+GET http://{{host}}/doc/history?title=main
 Content-Type: application/json
 
 {
@@ -112,7 +112,17 @@ Content-Type: application/json
 ###
 
 ###
-GET http://{{host}}/doc/search?search_text=김테스
+GET http://{{host}}/doc/history/detail?history_id=0
+Content-Type: application/json
+
+{
+    "title": "테스트2", 
+    "content": "으악"
+}
+###
+
+###
+GET http://{{host}}/doc/search?search_text=
 Content-Type: application/json
 
 {
@@ -122,7 +132,7 @@ Content-Type: application/json
 ###
 
 ###
-POST http://{{host}}/doc/document?title=테스트
+GET http://{{host}}/doc/document?title=1234
 Content-Type: application/json
 
 {

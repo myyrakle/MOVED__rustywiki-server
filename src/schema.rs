@@ -11,9 +11,9 @@ table! {
 }
 
 table! {
-    tb_debate_comment (id, id2, writer_id) {
+    tb_debate_comment (id, debate_id, writer_id) {
         id -> Int8,
-        id2 -> Int8,
+        debate_id -> Int8,
         writer_id -> Int8,
         content -> Text,
         reg_utc -> Int8,
@@ -41,6 +41,7 @@ table! {
         increase -> Int8,
         reg_utc -> Int8,
         latest_yn -> Bool,
+        rollback_id -> Nullable<Int8>,
     }
 }
 
