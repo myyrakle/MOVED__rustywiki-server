@@ -17,21 +17,22 @@ use crate::response::{ServerErrorResponse, UnauthorizedResponse};
 use crate::schema::{tb_document, tb_document_history};
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct WriteDocParam {
-    pub title: String,
+pub struct CreateDebateParam {
+    pub document_title: String,
+    pub subject: String,
     pub content: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct WriteDocResponse {
+pub struct CreateDebateResponse {
     pub success: bool,
-    pub is_new_doc: bool,
+    pub debate_id: i64,
     pub message: String,
 }
 
-#[post("/doc/document")]
+#[post("/doc/debate")]
 pub async fn write_doc(
-    web::Json(body): web::Json<WriteDocParam>,
+    web::Json(body): web::Json<CreateDebateParam>,
     request: HttpRequest,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
@@ -56,12 +57,49 @@ pub async fn write_doc(
 
     // 문서 존재여부 확인
     let exists_document_result = select(exists(
-        tb_document::dsl::tb_document.filter(tb_document::dsl::title.eq(&body.title)),
+        tb_document::dsl::tb_document.filter(tb_document::dsl::title.eq(&body.document_title)),
     ))
     .get_result(connection);
 
-    // 문서 개수
-    let content_length = body.content.chars().count() as i64;
+    let debate_id = connection.transaction(|| {
+        let document_id: i64 = tb_document::dsl::tb_document
+            .filter(tb_document::dsl::title.eq(&body.document_title))
+            .set(tb_document::dsl::update_utc.eq(1))
+            .returning(tb_document::dsl::id)
+            .get_result(connection)?;
+
+        let latest_history: SelectDocumentHistory = tb_document_history::dsl::tb_document_history
+            .filter(tb_document_history::dsl::document_id.eq(document_id))
+            .filter(tb_document_history::dsl::latest_yn.eq(true))
+            .order(tb_document_history::dsl::reg_utc.desc())
+            .limit(1)
+            .get_result(connection)?;
+
+        diesel::update(tb_document_history::dsl::tb_document_history)
+            .filter(tb_document_history::dsl::document_id.eq(document_id))
+            .set(tb_document_history::dsl::latest_yn.eq(false))
+            .execute(connection)?;
+
+        let increase = content_length - latest_history.char_count;
+
+        let document_history = InsertDocumentHistory {
+            writer_id: auth.user_id,
+            document_id: document_id,
+            content: body.content.clone(),
+            char_count: content_length,
+            increase: increase,
+        };
+
+        let document_history_id: i64 = diesel::insert_into(tb_document_history::table)
+            .values(document_history)
+            .returning(tb_document_history::dsl::id)
+            .get_result(connection)?;
+
+        diesel::update(tb_document::dsl::tb_document)
+            .filter(tb_document::dsl::title.eq(&body.title))
+            .set(tb_document::dsl::recent_history_id.eq(document_history_id))
+            .execute(connection)
+    });
 
     // 문서 존재 여부로 분기 처리
     match exists_document_result {
@@ -69,47 +107,6 @@ pub async fn write_doc(
             let result = if exists_document {
                 // 문서 최근 수정일 변경 및
                 // 문서 히스토리 추가
-
-                connection.transaction(|| {
-                    let document_id: i64 = diesel::update(tb_document::dsl::tb_document)
-                        .filter(tb_document::dsl::title.eq(&body.title))
-                        .set(tb_document::dsl::update_utc.eq(1))
-                        .returning(tb_document::dsl::id)
-                        .get_result(connection)?;
-
-                    let latest_history: SelectDocumentHistory =
-                        tb_document_history::dsl::tb_document_history
-                            .filter(tb_document_history::dsl::document_id.eq(document_id))
-                            .filter(tb_document_history::dsl::latest_yn.eq(true))
-                            .order(tb_document_history::dsl::reg_utc.desc())
-                            .limit(1)
-                            .get_result(connection)?;
-
-                    diesel::update(tb_document_history::dsl::tb_document_history)
-                        .filter(tb_document_history::dsl::document_id.eq(document_id))
-                        .set(tb_document_history::dsl::latest_yn.eq(false))
-                        .execute(connection)?;
-
-                    let increase = content_length - latest_history.char_count;
-
-                    let document_history = InsertDocumentHistory {
-                        writer_id: auth.user_id,
-                        document_id: document_id,
-                        content: body.content.clone(),
-                        char_count: content_length,
-                        increase: increase,
-                    };
-
-                    let document_history_id: i64 = diesel::insert_into(tb_document_history::table)
-                        .values(document_history)
-                        .returning(tb_document_history::dsl::id)
-                        .get_result(connection)?;
-
-                    diesel::update(tb_document::dsl::tb_document)
-                        .filter(tb_document::dsl::title.eq(&body.title))
-                        .set(tb_document::dsl::recent_history_id.eq(document_history_id))
-                        .execute(connection)
-                })
             } else {
                 // 문서 최초 생성
                 let document = InsertDocument {

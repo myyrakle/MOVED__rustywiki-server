@@ -70,13 +70,16 @@ pub async fn write_doc(
                 // 문서 최근 수정일 변경 및
                 // 문서 히스토리 추가
 
+                let now_utc = epoch_timestamp::Epoch::now() as i64;
+
                 connection.transaction(|| {
                     let document_id: i64 = diesel::update(tb_document::dsl::tb_document)
                         .filter(tb_document::dsl::title.eq(&body.title))
-                        .set(tb_document::dsl::update_utc.eq(1))
+                        .set(tb_document::dsl::update_utc.eq(now_utc))
                         .returning(tb_document::dsl::id)
                         .get_result(connection)?;
 
+                    // 최근 히스토리 조회
                     let latest_history: SelectDocumentHistory =
                         tb_document_history::dsl::tb_document_history
                             .filter(tb_document_history::dsl::document_id.eq(document_id))
