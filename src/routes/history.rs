@@ -3,13 +3,16 @@ use std::borrow::Borrow;
 use std::sync::Mutex;
 
 // thirdparty
-use actix_web::{get, http::StatusCode, web, web::Data, HttpRequest, HttpResponse, Responder};
+use actix_web::{
+    get, http::StatusCode, post, web, web::Data, HttpRequest, HttpResponse, Responder,
+};
 use diesel::*;
 use serde::{Deserialize, Serialize};
 
 // in crate
-use crate::models::SelectDocument;
-use crate::response::ServerErrorResponse;
+use crate::lib::AuthValue;
+use crate::models::{InsertDocumentHistory, SelectDocument, SelectDocumentHistory};
+use crate::response::{ServerErrorResponse, UnauthorizedResponse};
 use crate::schema::{tb_document, tb_document_history, tb_user};
 use crate::value::DocumentHistory;
 
@@ -171,6 +174,91 @@ pub async fn read_document_history_detail(
                 current_history: current_history,
                 prev_history: prev_history,
                 message: "".into(),
+            };
+            HttpResponse::build(StatusCode::OK).json(response)
+        }
+        Err(error) => {
+            log::error!("error: {}", error);
+            let response = ServerErrorResponse::new();
+            HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct RollbackDocParam {
+    pub history_id: i64,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct RollbackDocResponse {
+    pub success: bool,
+    pub message: String,
+}
+
+#[post("/doc/history/rollback")]
+pub async fn rollback_document_history(
+    web::Json(body): web::Json<RollbackDocParam>,
+    request: HttpRequest,
+    connection: Data<Mutex<PgConnection>>,
+) -> impl Responder {
+    let connection = match connection.lock() {
+        Err(_) => {
+            log::error!("database connection lock error");
+            let response = ServerErrorResponse::new();
+            return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+        }
+        Ok(connection) => connection,
+    };
+    let connection: &PgConnection = Borrow::borrow(&connection);
+
+    // 미인증 접근 거부
+    let extensions = request.extensions();
+    let nonauth = AuthValue::new();
+    let auth: &AuthValue = extensions.get::<AuthValue>().unwrap_or(&nonauth);
+    if !auth.is_authorized() {
+        let response = UnauthorizedResponse::new();
+        return HttpResponse::build(StatusCode::UNAUTHORIZED).json(response);
+    }
+
+    let result = connection.transaction(|| {
+        let selected_history = tb_document_history::table
+            .filter(tb_document_history::dsl::id.eq(body.history_id))
+            .get_result::<SelectDocumentHistory>(connection)?;
+
+        let latest_history_char_count: i64 = tb_document_history::dsl::tb_document_history
+            .filter(tb_document_history::dsl::document_id.eq(selected_history.document_id))
+            .filter(tb_document_history::dsl::latest_yn.eq(true))
+            .order(tb_document_history::dsl::reg_utc.desc())
+            .limit(1)
+            .select(tb_document_history::dsl::char_count)
+            .get_result(connection)
+            .unwrap_or(0);
+
+        diesel::update(tb_document_history::dsl::tb_document_history)
+            .filter(tb_document_history::dsl::document_id.eq(selected_history.document_id))
+            .set(tb_document_history::dsl::latest_yn.eq(false))
+            .execute(connection)?;
+
+        let insert_history = InsertDocumentHistory {
+            writer_id: auth.user_id,
+            document_id: selected_history.document_id,
+            content: selected_history.content,
+            char_count: selected_history.char_count,
+            increase: selected_history.increase - latest_history_char_count,
+            rollback_id: Some(selected_history.id),
+        };
+
+        diesel::insert_into(tb_document_history::dsl::tb_document_history)
+            .values(insert_history)
+            .execute(connection)
+    });
+
+    match result {
+        Ok(_) => {
+            let response = RollbackDocResponse {
+                success: true,
+                message: "문서 되돌리기 성공".into(),
             };
             HttpResponse::build(StatusCode::OK).json(response)
         }

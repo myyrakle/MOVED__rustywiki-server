@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+// tb_document_history join tb_user
 #[derive(Deserialize, Serialize, Debug, Clone, Queryable)]
 pub struct DocumentHistory {
     pub id: i64,

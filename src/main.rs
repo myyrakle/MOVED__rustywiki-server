@@ -116,6 +116,7 @@ async fn main() -> std::io::Result<()> {
             .service(routes::doc::read_doc)
             .service(routes::history::read_document_history_list)
             .service(routes::history::read_document_history_detail)
+            .service(routes::history::rollback_document_history)
             .service(routes::search::search_doc)
             .service(actix_files::Files::new("/static", "static").show_files_listing())
             .wrap(middleware::Auth::new())

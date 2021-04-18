@@ -8,6 +8,7 @@ pub struct InsertDocumentHistory {
     pub content: String,
     pub char_count: i64,
     pub increase: i64,
+    pub rollback_id: Option<i64>,
 }
 
 #[derive(Queryable)]
