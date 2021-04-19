@@ -15,3 +15,6 @@ pub use file::*;
 
 pub mod user;
 pub use user::*;
+
+pub mod debate;
+pub use debate::*;
