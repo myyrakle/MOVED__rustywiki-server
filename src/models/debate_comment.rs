@@ -6,8 +6,6 @@ pub struct InsertDebateComment {
     pub debate_id: i64,
     pub writer_id: i64,
     pub content: String,
-    pub reg_utc: i64,
-    pub use_yn: bool,
 }
 
 #[derive(Queryable)]
