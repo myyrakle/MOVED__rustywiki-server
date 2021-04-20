@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Deserialize, Serialize, Debug, Clone, Queryable)]
 pub struct Debate {
     pub id: i64,
-    pub document_id: i64,
     pub writer_id: i64,
     pub writer_name: String,
     pub subject: String,

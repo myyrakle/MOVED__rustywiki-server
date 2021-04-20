@@ -11,9 +11,10 @@ use serde::{Deserialize, Serialize};
 
 // in crate
 use crate::lib::AuthValue;
-use crate::models::{InsertDebate, InsertDebateComment, SelectDocument};
+use crate::models::{InsertDebate, InsertDebateComment};
 use crate::response::{ServerErrorResponse, UnauthorizedResponse};
-use crate::schema::{tb_debate, tb_debate_comment, tb_document};
+use crate::schema::{tb_debate, tb_debate_comment, tb_document, tb_user};
+use crate::value::Debate;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct CreateDebateParam {
@@ -179,45 +180,116 @@ pub async fn write_comment(
     }
 }
 
-// #[get("/doc/debate/open-list")]
-// pub async fn get_debate_open_list(
-//     web::Json(body): web::Json<CreateDebateParam>,
-//     request: HttpRequest,
-//     connection: Data<Mutex<PgConnection>>,
-// ) -> impl Responder {
-//     let connection = match connection.lock() {
-//         Err(_) => {
-//             log::error!("database connection lock error");
-//             let response = ServerErrorResponse::new();
-//             return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
-//         }
-//         Ok(connection) => connection,
-//     };
-//     let connection: &PgConnection = Borrow::borrow(&connection);
+#[derive(Deserialize, Serialize, Debug)]
+pub struct GetDebateListParam {
+    pub document_title: String,
+    pub open_yn: Option<bool>,
+    pub page: Option<i64>,
+    pub limit: Option<i64>,
+}
 
-//     let debate_id: Result<i64, diesel::result::Error> = connection.transaction(|| {
-//         let document_id: i64 = tb_document::dsl::tb_document
-//             .filter(tb_document::dsl::title.eq(&body.document_title))
-//             .select(tb_document::dsl::id)
-//             .get_result(connection)?;
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct GetDebateListResponse {
+    pub success: bool,
+    pub list: Vec<Debate>,
+    pub total_count: i64,
+    pub message: String,
+}
 
-//         Ok(debate_id)
-//     });
+#[get("/doc/debate-list")]
+pub async fn get_debate_list(
+    web::Query(query): web::Query<GetDebateListParam>,
+    _request: HttpRequest,
+    connection: Data<Mutex<PgConnection>>,
+) -> impl Responder {
+    let connection = match connection.lock() {
+        Err(_) => {
+            log::error!("database connection lock error");
+            let response = ServerErrorResponse::new();
+            return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+        }
+        Ok(connection) => connection,
+    };
+    let connection: &PgConnection = Borrow::borrow(&connection);
 
-//     // 문서 존재 여부로 분기 처리
-//     match debate_id {
-//         Ok(debate_id) => {
-//             let response = CreateDebateResponse {
-//                 success: true,
-//                 debate_id: debate_id,
-//                 message: "토론 등록 성공".into(),
-//             };
-//             HttpResponse::build(StatusCode::OK).json(response)
-//         }
-//         Err(error) => {
-//             log::error!("error: {}", error);
-//             let response = ServerErrorResponse::new();
-//             HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
-//         }
-//     }
-// }
+    let result: Result<(Vec<Debate>, i64), diesel::result::Error> = connection.transaction(|| {
+        let limit = query.limit.unwrap_or(10);
+        let offset = (query.page.unwrap_or(1) - 1) * limit;
+
+        let document_id: i64 = tb_document::dsl::tb_document
+            .filter(tb_document::dsl::title.eq(&query.document_title))
+            .select(tb_document::dsl::id)
+            .get_result(connection)?;
+
+        use diesel::dsl::count_star;
+        let list_and_count: (Vec<_>, i64) = if let Some(open_yn) = query.open_yn {
+            let list = tb_debate::table
+                .inner_join(tb_user::table.on(tb_user::dsl::id.eq(tb_debate::dsl::writer_id)))
+                .filter(tb_debate::dsl::document_id.eq(document_id))
+                .filter(tb_debate::dsl::open_yn.eq(open_yn))
+                .order(tb_debate::dsl::reg_utc.desc())
+                .offset(offset)
+                .limit(limit)
+                .select((
+                    tb_debate::dsl::id,
+                    tb_debate::dsl::writer_id,
+                    tb_user::dsl::nickname,
+                    tb_debate::dsl::subject,
+                    tb_debate::dsl::content,
+                    tb_debate::dsl::reg_utc,
+                ))
+                .get_results::<Debate>(connection)?;
+
+            let total_count: i64 = tb_debate::dsl::tb_debate
+                .filter(tb_debate::dsl::document_id.eq(document_id))
+                .filter(tb_debate::dsl::open_yn.eq(open_yn))
+                .select(count_star())
+                .get_result(connection)?;
+
+            (list, total_count)
+        } else {
+            let list = tb_debate::table
+                .inner_join(tb_user::table.on(tb_user::dsl::id.eq(tb_debate::dsl::writer_id)))
+                .filter(tb_debate::dsl::document_id.eq(document_id))
+                .order(tb_debate::dsl::reg_utc.desc())
+                .offset(offset)
+                .limit(limit)
+                .select((
+                    tb_debate::dsl::id,
+                    tb_debate::dsl::writer_id,
+                    tb_user::dsl::nickname,
+                    tb_debate::dsl::subject,
+                    tb_debate::dsl::content,
+                    tb_debate::dsl::reg_utc,
+                ))
+                .get_results::<Debate>(connection)?;
+
+            let total_count: i64 = tb_debate::dsl::tb_debate
+                .filter(tb_debate::dsl::document_id.eq(document_id))
+                .select(count_star())
+                .get_result(connection)?;
+
+            (list, total_count)
+        };
+
+        Ok(list_and_count)
+    });
+
+    // 문서 존재 여부로 분기 처리
+    match result {
+        Ok((list, total_count)) => {
+            let response = GetDebateListResponse {
+                success: true,
+                list: list,
+                total_count: total_count,
+                message: "토론 등록 성공".into(),
+            };
+            HttpResponse::build(StatusCode::OK).json(response)
+        }
+        Err(error) => {
+            log::error!("error: {}", error);
+            let response = ServerErrorResponse::new();
+            HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
+        }
+    }
+}

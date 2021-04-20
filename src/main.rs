@@ -120,6 +120,7 @@ async fn main() -> std::io::Result<()> {
             .service(routes::search::search_doc)
             .service(routes::debate::create_debate)
             .service(routes::debate::write_comment)
+            .service(routes::debate::get_debate_list)
             .service(actix_files::Files::new("/static", "static").show_files_listing())
             .wrap(middleware::Auth::new())
     })
