@@ -43,6 +43,7 @@ table! {
         reg_utc -> Int8,
         latest_yn -> Bool,
         rollback_id -> Nullable<Int8>,
+        revision_number -> Int8,
         use_yn -> Bool,
     }
 }
@@ -114,9 +115,6 @@ table! {
         dead_yn -> Bool,
     }
 }
-
-joinable!(tb_document_history -> tb_document (document_id));
-joinable!(tb_document_history -> tb_user (writer_id));
 
 allow_tables_to_appear_in_same_query!(
     tb_debate,

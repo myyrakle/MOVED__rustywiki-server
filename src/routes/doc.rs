@@ -102,6 +102,7 @@ pub async fn write_doc(
                         char_count: content_length,
                         increase: increase,
                         rollback_id: None,
+                        revision_number: latest_history.revision_number + 1,
                     };
 
                     let document_history_id: i64 = diesel::insert_into(tb_document_history::table)
@@ -133,6 +134,7 @@ pub async fn write_doc(
                         char_count: content_length,
                         increase: content_length,
                         rollback_id: None,
+                        revision_number: 1,
                     };
 
                     let document_history_id: i64 = diesel::insert_into(tb_document_history::table)

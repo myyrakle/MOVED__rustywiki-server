@@ -31,7 +31,7 @@ pub struct ReadHistoryResponse {
     pub message: String,
 }
 
-#[get("/doc/history")]
+#[get("/doc/history-list")]
 pub async fn read_document_history_list(
     web::Query(query): web::Query<ReadHistoryParam>,
     connection: Data<Mutex<PgConnection>>,
@@ -66,6 +66,7 @@ pub async fn read_document_history_list(
                 tb_document_history::dsl::char_count,
                 tb_document_history::dsl::increase,
                 tb_document_history::dsl::reg_utc,
+                tb_document_history::dsl::revision_number,
                 tb_document_history::dsl::writer_id,
                 tb_user::dsl::nickname,
             ))
@@ -111,7 +112,7 @@ pub struct ReadHistoryDetailResponse {
     pub message: String,
 }
 
-#[get("/doc/history/detail")]
+#[get("/doc/history")]
 pub async fn read_document_history_detail(
     web::Query(query): web::Query<ReadHistoryDetailParam>,
     connection: Data<Mutex<PgConnection>>,
@@ -139,6 +140,7 @@ pub async fn read_document_history_detail(
                     tb_document_history::dsl::char_count,
                     tb_document_history::dsl::increase,
                     tb_document_history::dsl::reg_utc,
+                    tb_document_history::dsl::revision_number,
                     tb_document_history::dsl::writer_id,
                     tb_user::dsl::nickname,
                 ))
@@ -158,6 +160,7 @@ pub async fn read_document_history_detail(
                     tb_document_history::dsl::char_count,
                     tb_document_history::dsl::increase,
                     tb_document_history::dsl::reg_utc,
+                    tb_document_history::dsl::revision_number,
                     tb_document_history::dsl::writer_id,
                     tb_user::dsl::nickname,
                 ))
@@ -226,14 +229,17 @@ pub async fn rollback_document_history(
             .filter(tb_document_history::dsl::id.eq(body.history_id))
             .get_result::<SelectDocumentHistory>(connection)?;
 
-        let latest_history_char_count: i64 = tb_document_history::dsl::tb_document_history
-            .filter(tb_document_history::dsl::document_id.eq(selected_history.document_id))
-            .filter(tb_document_history::dsl::latest_yn.eq(true))
-            .order(tb_document_history::dsl::reg_utc.desc())
-            .limit(1)
-            .select(tb_document_history::dsl::char_count)
-            .get_result(connection)
-            .unwrap_or(0);
+        let (latest_history_char_count, latest_history_revision_number): (i64, i64) =
+            tb_document_history::dsl::tb_document_history
+                .filter(tb_document_history::dsl::document_id.eq(selected_history.document_id))
+                .filter(tb_document_history::dsl::latest_yn.eq(true))
+                .order(tb_document_history::dsl::reg_utc.desc())
+                .limit(1)
+                .select((
+                    tb_document_history::dsl::char_count,
+                    tb_document_history::dsl::revision_number,
+                ))
+                .get_result(connection)?;
 
         diesel::update(tb_document_history::dsl::tb_document_history)
             .filter(tb_document_history::dsl::document_id.eq(selected_history.document_id))
@@ -247,6 +253,7 @@ pub async fn rollback_document_history(
             char_count: selected_history.char_count,
             increase: selected_history.increase - latest_history_char_count,
             rollback_id: Some(selected_history.id),
+            revision_number: latest_history_revision_number + 1,
         };
 
         diesel::insert_into(tb_document_history::dsl::tb_document_history)

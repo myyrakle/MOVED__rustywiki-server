@@ -32,6 +32,7 @@ CREATE TABLE "tb_document_history" (
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
 	"latest_yn"	bool	DEFAULT true	NOT NULL,
 	"rollback_id"	int8		NULL,
+	"revision_number"	int8		NOT NULL,
 	"use_yn"	bool	DEFAULT true	NOT NULL
 );
 
@@ -170,21 +171,6 @@ ALTER TABLE "tb_file_history" ADD CONSTRAINT "PK_TB_FILE_HISTORY" PRIMARY KEY (
 	"writer_id",
 	"file_id"
 );
-
-ALTER TABLE "tb_document_history" ADD CONSTRAINT "FK_tb_user_TO_tb_document_history_1" FOREIGN KEY (
-	"writer_id"
-)
-REFERENCES "tb_user" (
-	"id"
-);
-
-ALTER TABLE "tb_document_history" ADD CONSTRAINT "FK_tb_document_TO_tb_document_history_1" FOREIGN KEY (
-	"document_id"
-)
-REFERENCES "tb_document" (
-	"id"
-);
-
 
 -- 인덱스 등 추가
 CREATE index "tb_document_title_gin" on "tb_document" using gin("title" gin_trgm_ops);

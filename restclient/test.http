@@ -1,5 +1,26 @@
 @host = 192.168.1.2:11111
 
+### 회원가입
+POST http://{{host}}/auth/signup
+Content-Type: application/json
+
+{
+    "email":"foobar2@naver.com",
+    "password": "asdf", 
+    "nickname": "김불닭"
+}
+###
+
+### 로그인
+POST http://{{host}}/auth/login
+Content-Type: application/json
+
+{
+    "email":"foobar2@naver.com",
+    "password": "asdf"
+}
+###
+
 ### 액세스 토큰 갱신
 PUT http://{{host}}/auth/refresh
 Content-Type: application/json
@@ -15,14 +36,6 @@ Content-Type: application/json
 
 {
     "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoyLCJ1c2VyX3R5cGUiOiLquYDrtojri60iLCJleHAiOjE2NDY0MDIzNjN9.adeeA0eg2UwSag2WUR1vPUk1k1hcD45n38QI2OUI2ug"
-}
-###
-
-### signup
-GET http://{{host}}/foo
-Content-Type: application/json
-
-{
 }
 ###
 
@@ -42,47 +55,6 @@ Content-Type: application/json
 }
 ###
 
-### signup
-POST http://{{host}}/auth/signup
-Content-Type: application/json
-
-{
-    "email":"foobar2@naver.com",
-    "password": "asdf", 
-    "nickname": "김불닭"
-}
-###
-
-### signup
-POST http://{{host}}/auth/signup
-Content-Type: application/json
-
-{
-    "email":"foobar354@naver.com",
-    "password": "asdf", 
-    "nickname": "김불닭"
-}
-###
-
-### login
-POST http://{{host}}/auth/login
-Content-Type: application/json
-
-{
-    "email":"foobar354@naver.com",
-    "password": "asdf"
-}
-###
-
-### login
-DELETE http://{{host}}/auth/logout
-Content-Type: application/json
-
-{
-    "refresh_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJ1c2VyX3R5cGUiOiJVU0VSIiwiZXhwIjoxNjQ5Mjg4NDk2fQ.Z7J0RDYPToW1CblK6_1n-TTGAnocsa2FH7o9r6E6XFM"
-}
-###
-
 ###
 GET http://{{host}}
 Content-Type: application/json
@@ -91,18 +63,18 @@ Content-Type: application/json
 }
 ###
 
-###
+### 문서 등록
 POST http://{{host}}/doc/document
 Content-Type: application/json
 
 {
-    "title": "테스트2", 
-    "content": "으악"
+    "title": "foo", 
+    "content": "으악asfdqwdqwdqw22"
 }
 ###
 
 ###
-GET http://{{host}}/doc/history?title=main
+GET http://{{host}}/doc/history?title=foo
 Content-Type: application/json
 
 {
@@ -111,8 +83,17 @@ Content-Type: application/json
 }
 ###
 
+### 롤백하기
+POST http://{{host}}/doc/history/rollback
+Content-Type: application/json
+
+{
+    "history_id": 5
+}
 ###
-GET http://{{host}}/doc/history/detail?history_id=0
+
+###
+GET http://{{host}}/doc/history/detail?history_id=4
 Content-Type: application/json
 
 {
@@ -136,5 +117,37 @@ GET http://{{host}}/doc/document?title=1234
 Content-Type: application/json
 
 {
+}
+###
+
+###
+POST http://{{host}}/doc/debate
+Content-Type: application/json
+
+{
+    "document_title": "foo",
+    "subject":"주제1",
+    "content":"내용1"
+}
+###
+
+###
+POST http://{{host}}/doc/debate/comment
+Content-Type: application/json
+
+{
+    "debate_id": 1,
+    "content":"내용1"
+}
+###
+
+
+###
+GET http://{{host}}/doc/debate-list?document_title=foo&open_yn=true
+Content-Type: application/json
+
+{
+    "debate_id": 1,
+    "content":"내용1"
 }
 ###

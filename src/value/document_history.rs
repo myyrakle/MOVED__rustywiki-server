@@ -8,6 +8,7 @@ pub struct DocumentHistory {
     pub char_count: i64,
     pub increase: i64,
     pub reg_utc: i64,
+    pub revision_number: i64,
     pub writer_id: i64,
     pub writer_name: String,
 }
