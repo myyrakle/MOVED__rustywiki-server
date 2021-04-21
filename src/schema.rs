@@ -42,8 +42,8 @@ table! {
         increase -> Int8,
         reg_utc -> Int8,
         latest_yn -> Bool,
-        rollback_id -> Nullable<Int8>,
         revision_number -> Int8,
+        rollback_revision_number -> Nullable<Int8>,
         use_yn -> Bool,
     }
 }

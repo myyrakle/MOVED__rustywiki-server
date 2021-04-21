@@ -67,6 +67,7 @@ pub async fn read_document_history_list(
                 tb_document_history::dsl::increase,
                 tb_document_history::dsl::reg_utc,
                 tb_document_history::dsl::revision_number,
+                tb_document_history::dsl::rollback_revision_number,
                 tb_document_history::dsl::writer_id,
                 tb_user::dsl::nickname,
             ))
@@ -141,6 +142,7 @@ pub async fn read_document_history_detail(
                     tb_document_history::dsl::increase,
                     tb_document_history::dsl::reg_utc,
                     tb_document_history::dsl::revision_number,
+                    tb_document_history::dsl::rollback_revision_number,
                     tb_document_history::dsl::writer_id,
                     tb_user::dsl::nickname,
                 ))
@@ -161,6 +163,7 @@ pub async fn read_document_history_detail(
                     tb_document_history::dsl::increase,
                     tb_document_history::dsl::reg_utc,
                     tb_document_history::dsl::revision_number,
+                    tb_document_history::dsl::rollback_revision_number,
                     tb_document_history::dsl::writer_id,
                     tb_user::dsl::nickname,
                 ))
@@ -252,7 +255,7 @@ pub async fn rollback_document_history(
             content: selected_history.content,
             char_count: selected_history.char_count,
             increase: selected_history.increase - latest_history_char_count,
-            rollback_id: Some(selected_history.id),
+            rollback_revision_number: Some(selected_history.revision_number),
             revision_number: latest_history_revision_number + 1,
         };
 

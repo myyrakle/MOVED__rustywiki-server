@@ -31,8 +31,8 @@ CREATE TABLE "tb_document_history" (
 	"increase"	int8		NOT NULL,
 	"reg_utc"	int8	DEFAULT floor(date_part('epoch'::text, now()))::bigint	NOT NULL,
 	"latest_yn"	bool	DEFAULT true	NOT NULL,
-	"rollback_id"	int8		NULL,
 	"revision_number"	int8		NOT NULL,
+	"rollback_revision_number"	int8		NULL,
 	"use_yn"	bool	DEFAULT true	NOT NULL
 );
 

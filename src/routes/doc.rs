@@ -101,7 +101,7 @@ pub async fn write_doc(
                         content: body.content.clone(),
                         char_count: content_length,
                         increase: increase,
-                        rollback_id: None,
+                        rollback_revision_number: None,
                         revision_number: latest_history.revision_number + 1,
                     };
 
@@ -133,7 +133,7 @@ pub async fn write_doc(
                         content: body.content.clone(),
                         char_count: content_length,
                         increase: content_length,
-                        rollback_id: None,
+                        rollback_revision_number: None,
                         revision_number: 1,
                     };
 
