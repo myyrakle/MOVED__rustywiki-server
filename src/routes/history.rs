@@ -259,8 +259,15 @@ pub async fn rollback_document_history(
             revision_number: latest_history_revision_number + 1,
         };
 
-        diesel::insert_into(tb_document_history::dsl::tb_document_history)
-            .values(insert_history)
+        let document_history_id: i64 =
+            diesel::insert_into(tb_document_history::dsl::tb_document_history)
+                .values(insert_history)
+                .returning(tb_document_history::dsl::id)
+                .get_result(connection)?;
+
+        diesel::update(tb_document::dsl::tb_document)
+            .filter(tb_document::dsl::id.eq(selected_history.document_id))
+            .set(tb_document::dsl::recent_history_id.eq(document_history_id))
             .execute(connection)
     });
 

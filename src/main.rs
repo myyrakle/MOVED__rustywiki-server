@@ -33,9 +33,7 @@ async fn root(
     text.to_string()
 }
 
-//use diesel::dsl::{exists, select};
 use diesel::*;
-//use schema::tb_user;
 use std::borrow::Borrow;
 
 #[derive(Queryable, Debug)]
@@ -55,21 +53,6 @@ async fn test(connection: Data<Mutex<PgConnection>>) -> impl Responder {
     };
     let _connection: &PgConnection = Borrow::borrow(&connection);
 
-    // use crate::schema::test;
-    // use diesel::dsl::count;
-
-    // // select sum(id) from test
-    // let query = test::dsl::test
-    //     .group_by(test::dsl::dead_yn)
-    //     .select((test::dsl::dead_yn, count(test::dsl::id)));
-    // println!(
-    //     "query {:?}",
-    //     diesel::debug_query::<diesel::pg::Pg, _>(&query)
-    // );
-
-    // let result = query.get_results::<(bool, i64)>(connection).unwrap();
-    // println!("값 {:?}", result);
-
     "".to_string()
 }
 
@@ -77,7 +60,8 @@ async fn test(connection: Data<Mutex<PgConnection>>) -> impl Responder {
 async fn main() -> std::io::Result<()> {
     let _args: Vec<String> = std::env::args().collect();
 
-    let host = "192.168.1.2"; //&args[1];
+    //let host = "192.168.1.2"; //&args[1];
+    let host = "0.0.0.0";
     let port = 11111; //&args[2];
     let address = format!("{}:{}", host, port);
 
