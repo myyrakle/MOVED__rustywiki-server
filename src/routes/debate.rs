@@ -10,7 +10,7 @@ use diesel::*;
 use serde::{Deserialize, Serialize};
 
 // in crate
-use crate::lib::AuthValue;
+use crate::lib::{make_offset, init_pagination. AuthValue};
 use crate::models::{InsertDebate, InsertDebateComment};
 use crate::response::{ServerErrorResponse, UnauthorizedResponse};
 use crate::schema::{tb_debate, tb_debate_comment, tb_document, tb_user};
@@ -186,6 +186,7 @@ pub struct GetDebateListParam {
     pub open_yn: Option<bool>,
     pub page: Option<i64>,
     pub limit: Option<i64>,
+    pub next_token: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -213,9 +214,9 @@ pub async fn get_debate_list(
     let connection: &PgConnection = Borrow::borrow(&connection);
 
     let result: Result<(Vec<Debate>, i64), diesel::result::Error> = connection.transaction(|| {
-        let limit = query.limit.unwrap_or(10);
-        let offset = (query.page.unwrap_or(1) - 1) * limit;
-
+        //let next_token
+        let (offset, limit) = init_pagination(query.page, query.limit, query.next_token);
+        
         let document_id: i64 = tb_document::dsl::tb_document
             .filter(tb_document::dsl::title.eq(&query.document_title))
             .select(tb_document::dsl::id)

@@ -12,3 +12,6 @@ pub use password_hash::*;
 
 pub mod constants;
 pub use constants::*;
+
+pub mod pagination;
+pub use pagination::*;
