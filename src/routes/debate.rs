@@ -10,7 +10,7 @@ use diesel::*;
 use serde::{Deserialize, Serialize};
 
 // in crate
-use crate::lib::{make_offset, init_pagination. AuthValue};
+use crate::lib::{init_pagination, to_page_token, AuthValue};
 use crate::models::{InsertDebate, InsertDebateComment};
 use crate::response::{ServerErrorResponse, UnauthorizedResponse};
 use crate::schema::{tb_debate, tb_debate_comment, tb_document, tb_user};
@@ -194,6 +194,8 @@ pub struct GetDebateListResponse {
     pub success: bool,
     pub list: Vec<Debate>,
     pub total_count: i64,
+    pub has_next: bool,
+    pub next_token: String,
     pub message: String,
 }
 
@@ -213,10 +215,14 @@ pub async fn get_debate_list(
     };
     let connection: &PgConnection = Borrow::borrow(&connection);
 
+    let (offset, limit) = init_pagination(
+        query.page.clone(),
+        query.limit.clone(),
+        query.next_token.clone(),
+    );
+
     let result: Result<(Vec<Debate>, i64), diesel::result::Error> = connection.transaction(|| {
         //let next_token
-        let (offset, limit) = init_pagination(query.page, query.limit, query.next_token);
-        
         let document_id: i64 = tb_document::dsl::tb_document
             .filter(tb_document::dsl::title.eq(&query.document_title))
             .select(tb_document::dsl::id)
@@ -279,10 +285,13 @@ pub async fn get_debate_list(
     // 문서 존재 여부로 분기 처리
     match result {
         Ok((list, total_count)) => {
+            let (has_next, next_token) = to_page_token(offset, limit, total_count);
             let response = GetDebateListResponse {
                 success: true,
                 list: list,
                 total_count: total_count,
+                has_next: has_next,
+                next_token: next_token,
                 message: "토론 등록 성공".into(),
             };
             HttpResponse::build(StatusCode::OK).json(response)
