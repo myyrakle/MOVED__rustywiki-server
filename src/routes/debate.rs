@@ -14,7 +14,7 @@ use crate::lib::{init_pagination, to_page_token, AuthValue};
 use crate::models::{InsertDebate, InsertDebateComment};
 use crate::response::{ServerErrorResponse, UnauthorizedResponse};
 use crate::schema::{tb_debate, tb_debate_comment, tb_document, tb_user};
-use crate::value::Debate;
+use crate::value::{Debate, DebateComment};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct CreateDebateParam {
@@ -293,6 +293,112 @@ pub async fn get_debate_list(
                 has_next: has_next,
                 next_token: next_token,
                 message: "토론 등록 성공".into(),
+            };
+            HttpResponse::build(StatusCode::OK).json(response)
+        }
+        Err(error) => {
+            log::error!("error: {}", error);
+            let response = ServerErrorResponse::new();
+            HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response)
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct GetDebateParam {
+    pub debate_id: i64,
+    pub page: Option<i64>,
+    pub limit: Option<i64>,
+    pub next_token: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct GetDebateResponse {
+    pub success: bool,
+    pub debate: Debate,
+    pub comment_list: Vec<DebateComment>,
+    pub total_count: i64,
+    pub has_next: bool,
+    pub next_token: String,
+    pub message: String,
+}
+
+#[get("/doc/debate")]
+pub async fn get_debate(
+    web::Query(query): web::Query<GetDebateParam>,
+    _request: HttpRequest,
+    connection: Data<Mutex<PgConnection>>,
+) -> impl Responder {
+    let connection = match connection.lock() {
+        Err(_) => {
+            log::error!("database connection lock error");
+            let response = ServerErrorResponse::new();
+            return HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).json(response);
+        }
+        Ok(connection) => connection,
+    };
+    let connection: &PgConnection = Borrow::borrow(&connection);
+
+    let (offset, limit) = init_pagination(
+        query.page.clone(),
+        query.limit.clone(),
+        query.next_token.clone(),
+    );
+
+    let result: Result<(Debate, Vec<DebateComment>, i64), diesel::result::Error> = connection
+        .transaction(|| {
+            let debate: Debate = tb_debate::table
+                .inner_join(tb_user::table.on(tb_user::dsl::id.eq(tb_debate::dsl::writer_id)))
+                .filter(tb_debate::dsl::id.eq(&query.debate_id))
+                .select((
+                    tb_debate::dsl::id,
+                    tb_debate::dsl::writer_id,
+                    tb_user::dsl::nickname,
+                    tb_debate::dsl::subject,
+                    tb_debate::dsl::content,
+                    tb_debate::dsl::reg_utc,
+                ))
+                .get_result(connection)?;
+
+            use diesel::dsl::count_star;
+
+            let list = tb_debate_comment::table
+                .inner_join(
+                    tb_user::table.on(tb_user::dsl::id.eq(tb_debate_comment::dsl::writer_id)),
+                )
+                .filter(tb_debate_comment::dsl::debate_id.eq(&query.debate_id))
+                .order(tb_debate_comment::dsl::reg_utc.desc())
+                .offset(offset)
+                .limit(limit)
+                .select((
+                    tb_debate_comment::dsl::id,
+                    tb_debate_comment::dsl::writer_id,
+                    tb_user::dsl::nickname,
+                    tb_debate_comment::dsl::content,
+                    tb_debate_comment::dsl::reg_utc,
+                ))
+                .get_results::<DebateComment>(connection)?;
+
+            let total_count: i64 = tb_debate_comment::dsl::tb_debate_comment
+                .filter(tb_debate_comment::dsl::debate_id.eq(&query.debate_id))
+                .select(count_star())
+                .get_result(connection)?;
+
+            Ok((debate, list, total_count))
+        });
+
+    // 문서 존재 여부로 분기 처리
+    match result {
+        Ok((debate, list, total_count)) => {
+            let (has_next, next_token) = to_page_token(offset, limit, total_count);
+            let response = GetDebateResponse {
+                success: true,
+                debate: debate,
+                comment_list: list,
+                total_count: total_count,
+                has_next: has_next,
+                next_token: next_token,
+                message: "".into(),
             };
             HttpResponse::build(StatusCode::OK).json(response)
         }
