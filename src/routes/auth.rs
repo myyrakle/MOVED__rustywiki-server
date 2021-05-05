@@ -6,6 +6,7 @@ use std::sync::Mutex;
 use actix_web::{
     cookie::Cookie, delete, http::StatusCode, post, put, web, web::Data, HttpResponse, Responder,
 };
+use actix_web_validator::{Json, Query, Validate};
 use diesel::dsl::{exists, select};
 use diesel::*;
 use serde::{Deserialize, Serialize};
@@ -17,8 +18,9 @@ use crate::models::{InsertRefreshToken, InsertUser, SelectUser};
 use crate::response::ServerErrorResponse;
 use crate::schema::{tb_refresh_token, tb_user};
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Validate, Debug)]
 pub struct SignupParam {
+    #[validate(email)]
     pub email: String,
     pub password: String,
     pub nickname: String,
@@ -34,7 +36,7 @@ pub struct SignupResponse {
 // 회원가입
 #[post("/auth/signup")]
 pub async fn signup(
-    web::Json(body): web::Json<SignupParam>,
+    Json(body): Json<SignupParam>,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
     let connection = match connection.lock() {
@@ -95,8 +97,9 @@ pub async fn signup(
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Validate, Debug)]
 pub struct LoginParam {
+    #[validate(email)]
     pub email: String,
     pub password: String,
 }
@@ -113,7 +116,7 @@ pub struct LoginResponse {
 // 로그인
 #[post("/auth/login")]
 pub async fn login(
-    web::Json(body): web::Json<LoginParam>,
+    Json(body): Json<LoginParam>,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
     let connection = match connection.lock() {
@@ -231,7 +234,7 @@ pub async fn login(
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Validate, Debug)]
 pub struct LogoutParam {
     pub refresh_token: String,
 }
@@ -245,7 +248,7 @@ pub struct LogoutResponse {
 // 로그아웃
 #[delete("/auth/logout")]
 pub async fn logout(
-    web::Json(body): web::Json<LogoutParam>,
+    Query(query): Query<LogoutParam>,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
     let connection = match connection.lock() {
@@ -259,7 +262,7 @@ pub async fn logout(
     let connection: &PgConnection = Borrow::borrow(&connection);
 
     let token = tb_refresh_token::dsl::tb_refresh_token
-        .filter(tb_refresh_token::dsl::token_value.eq(&body.refresh_token))
+        .filter(tb_refresh_token::dsl::token_value.eq(&query.refresh_token))
         .filter(tb_refresh_token::dsl::dead_yn.eq(false));
 
     // 리프레시 토큰 삭제처리
@@ -303,7 +306,7 @@ pub async fn logout(
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Validate, Debug)]
 pub struct RefreshParam {
     pub refresh_token: String,
 }
@@ -319,7 +322,7 @@ pub struct RefreshResponse {
 // 액세스 토큰 갱신
 #[put("/auth/refresh")]
 pub async fn refresh(
-    web::Json(body): web::Json<RefreshParam>,
+    Json(body): Json<RefreshParam>,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
     let connection = match connection.lock() {
