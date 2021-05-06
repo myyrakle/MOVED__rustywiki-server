@@ -3,9 +3,8 @@ use std::borrow::Borrow;
 use std::sync::Mutex;
 
 // thirdparty
-use actix_web::{
-    get, http::StatusCode, post, web, web::Data, HttpRequest, HttpResponse, Responder,
-};
+use actix_web::{get, http::StatusCode, post, web::Data, HttpRequest, HttpResponse, Responder};
+use actix_web_validator::{Json, Query, Validate};
 use diesel::*;
 use serde::{Deserialize, Serialize};
 
@@ -16,7 +15,7 @@ use crate::response::{ServerErrorResponse, UnauthorizedResponse};
 use crate::schema::{tb_document, tb_document_history, tb_user};
 use crate::value::DocumentHistory;
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Validate, Debug)]
 pub struct ReadHistoryParam {
     pub title: String,
     pub page: Option<i64>,
@@ -33,7 +32,7 @@ pub struct ReadHistoryResponse {
 
 #[get("/doc/history-list")]
 pub async fn read_document_history_list(
-    web::Query(query): web::Query<ReadHistoryParam>,
+    Query(query): Query<ReadHistoryParam>,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
     let connection = match connection.lock() {
@@ -100,7 +99,7 @@ pub async fn read_document_history_list(
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Validate, Debug)]
 pub struct ReadHistoryDetailParam {
     pub history_id: i64,
 }
@@ -115,7 +114,7 @@ pub struct ReadHistoryDetailResponse {
 
 #[get("/doc/history")]
 pub async fn read_document_history_detail(
-    web::Query(query): web::Query<ReadHistoryDetailParam>,
+    Query(query): Query<ReadHistoryDetailParam>,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
     let connection = match connection.lock() {
@@ -191,7 +190,7 @@ pub async fn read_document_history_detail(
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Validate, Debug)]
 pub struct RollbackDocParam {
     pub history_id: i64,
 }
@@ -204,7 +203,7 @@ pub struct RollbackDocResponse {
 
 #[post("/doc/history/rollback")]
 pub async fn rollback_document_history(
-    web::Json(body): web::Json<RollbackDocParam>,
+    Json(body): Json<RollbackDocParam>,
     request: HttpRequest,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
