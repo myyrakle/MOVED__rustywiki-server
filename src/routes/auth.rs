@@ -4,9 +4,9 @@ use std::sync::Mutex;
 
 // thirdparty
 use actix_web::{
-    cookie::Cookie, delete, http::StatusCode, post, put, web, web::Data, HttpResponse, Responder,
+    cookie::Cookie, delete, http::StatusCode, post, put, web::Data, HttpResponse, Responder,
 };
-use actix_web_validator::{Json, Query, Validate};
+
 use diesel::dsl::{exists, select};
 use diesel::*;
 use serde::{Deserialize, Serialize};
@@ -17,6 +17,8 @@ use crate::lib::jwt;
 use crate::models::{InsertRefreshToken, InsertUser, SelectUser};
 use crate::response::ServerErrorResponse;
 use crate::schema::{tb_refresh_token, tb_user};
+
+use actix_web_validator::{Json, Query, Validate};
 
 #[derive(Deserialize, Validate, Debug)]
 pub struct SignupParam {

@@ -6,6 +6,7 @@ use std::sync::Mutex;
 use actix_web::{
     get, http::StatusCode, post, web, web::Data, HttpRequest, HttpResponse, Responder,
 };
+use actix_web_validator::{Json, Query, Validate};
 use diesel::*;
 use serde::{Deserialize, Serialize};
 
@@ -16,7 +17,7 @@ use crate::response::{ServerErrorResponse, UnauthorizedResponse};
 use crate::schema::{tb_debate, tb_debate_comment, tb_document, tb_user};
 use crate::value::{Debate, DebateComment};
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Validate, Debug)]
 pub struct CreateDebateParam {
     pub document_title: String,
     pub subject: String,
@@ -32,7 +33,7 @@ pub struct CreateDebateResponse {
 
 #[post("/doc/debate")]
 pub async fn create_debate(
-    web::Json(body): web::Json<CreateDebateParam>,
+    Json(body): Json<CreateDebateParam>,
     request: HttpRequest,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
@@ -94,7 +95,7 @@ pub async fn create_debate(
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Validate, Debug)]
 pub struct WriteCommentParam {
     pub debate_id: i64,
     pub content: String,
@@ -109,7 +110,7 @@ pub struct WriteCommentResponse {
 
 #[post("/doc/debate/comment")]
 pub async fn write_comment(
-    web::Json(body): web::Json<WriteCommentParam>,
+    Json(body): Json<WriteCommentParam>,
     request: HttpRequest,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
@@ -180,7 +181,7 @@ pub async fn write_comment(
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Validate, Debug)]
 pub struct GetDebateListParam {
     pub document_title: String,
     pub open_yn: Option<bool>,
@@ -201,7 +202,7 @@ pub struct GetDebateListResponse {
 
 #[get("/doc/debate-list")]
 pub async fn get_debate_list(
-    web::Query(query): web::Query<GetDebateListParam>,
+    Query(query): Query<GetDebateListParam>,
     _request: HttpRequest,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
@@ -304,7 +305,7 @@ pub async fn get_debate_list(
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Validate, Debug)]
 pub struct GetDebateParam {
     pub debate_id: i64,
     pub page: Option<i64>,
@@ -325,7 +326,7 @@ pub struct GetDebateResponse {
 
 #[get("/doc/debate")]
 pub async fn get_debate(
-    web::Query(query): web::Query<GetDebateParam>,
+    Query(query): Query<GetDebateParam>,
     _request: HttpRequest,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
