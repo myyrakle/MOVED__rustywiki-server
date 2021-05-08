@@ -3,9 +3,7 @@ use std::borrow::Borrow;
 use std::sync::Mutex;
 
 // thirdparty
-use actix_web::{
-    get, http::StatusCode, post, web, web::Data, HttpRequest, HttpResponse, Responder,
-};
+use actix_web::{get, http::StatusCode, post, web::Data, HttpRequest, HttpResponse, Responder};
 use actix_web_validator::{Json, Query, Validate};
 use diesel::*;
 use serde::{Deserialize, Serialize};

@@ -3,7 +3,8 @@ use std::borrow::Borrow;
 use std::sync::Mutex;
 
 // thirdparty
-use actix_web::{get, http::StatusCode, web, web::Data, HttpResponse, Responder};
+use actix_web::{get, http::StatusCode, web::Data, HttpResponse, Responder};
+use actix_web_validator::{Query, Validate};
 use diesel::*;
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use crate::response::ServerErrorResponse;
 use crate::schema::tb_document;
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Validate, Debug)]
 pub struct SearchDocParam {
     pub search_text: String,
 }
@@ -25,7 +26,7 @@ pub struct SearchDocResponse {
 
 #[get("/doc/search")]
 pub async fn search_doc(
-    web::Query(query): web::Query<SearchDocParam>,
+    Query(query): Query<SearchDocParam>,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
     let connection = match connection.lock() {

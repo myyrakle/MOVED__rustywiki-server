@@ -3,9 +3,8 @@ use std::borrow::Borrow;
 use std::sync::Mutex;
 
 // thirdparty
-use actix_web::{
-    get, http::StatusCode, post, web, web::Data, HttpRequest, HttpResponse, Responder,
-};
+use actix_web::{get, http::StatusCode, post, web::Data, HttpRequest, HttpResponse, Responder};
+use actix_web_validator::{Json, Query, Validate};
 use diesel::dsl::{exists, select};
 use diesel::*;
 use serde::{Deserialize, Serialize};
@@ -16,7 +15,7 @@ use crate::models::{InsertDocument, InsertDocumentHistory, SelectDocument, Selec
 use crate::response::{ServerErrorResponse, UnauthorizedResponse};
 use crate::schema::{tb_document, tb_document_history};
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Validate, Debug)]
 pub struct WriteDocParam {
     pub title: String,
     pub content: String,
@@ -31,7 +30,7 @@ pub struct WriteDocResponse {
 
 #[post("/doc/document")]
 pub async fn write_doc(
-    web::Json(body): web::Json<WriteDocParam>,
+    Json(body): Json<WriteDocParam>,
     request: HttpRequest,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
@@ -173,7 +172,7 @@ pub async fn write_doc(
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Validate, Debug)]
 pub struct ReadDocParam {
     pub title: String,
 }
@@ -190,7 +189,7 @@ pub struct ReadDocResponse {
 
 #[get("/doc/document")]
 pub async fn read_doc(
-    web::Query(query): web::Query<ReadDocParam>,
+    Query(query): Query<ReadDocParam>,
     connection: Data<Mutex<PgConnection>>,
 ) -> impl Responder {
     let connection = match connection.lock() {
