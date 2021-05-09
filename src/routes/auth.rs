@@ -22,6 +22,7 @@ use crate::schema::{tb_refresh_token, tb_user};
 pub struct SignupParam {
     #[validate(email)]
     pub email: String,
+    #[validate(length(min = 8))]
     pub password: String,
     pub nickname: String,
 }
@@ -101,6 +102,7 @@ pub async fn signup(
 pub struct LoginParam {
     #[validate(email)]
     pub email: String,
+    #[validate(length(min = 8))]
     pub password: String,
 }
 
