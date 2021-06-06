@@ -85,7 +85,7 @@ async fn main() -> std::io::Result<()> {
                     .allowed_origin("http://localhost:3000/")
                     .allowed_origin("http://192.168.1.2:11111")
                     .allowed_origin("http://192.168.1.2:22222")
-                    .allowed_origin("https://myyrakle.github.io/rustywiki-api-document")
+                    .allowed_origin("https://myyrakle.github.io")
                     .supports_credentials(),
             )
             .wrap(middleware::Logger::new()) //로깅용 미들웨어
